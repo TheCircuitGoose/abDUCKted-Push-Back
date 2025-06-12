@@ -1,0 +1,104 @@
+// Include Libraries
+#include "main.h"
+
+#include <iostream>
+#include <thread>
+
+#include "liblvgl/lvgl.h"
+#include "lemlib/api.hpp"
+
+// Device Declarations
+pros::Controller primary(pros::E_CONTROLLER_MASTER);				// Creates primary controller
+pros::MotorGroup left_mg({-1, -2, 3}, pros::MotorGearset::blue);	// Creates left drive motor group with ports 1, 2, and 3
+pros::MotorGroup right_mg({4, 5, -6}, pros::MotorGearset::blue);	// Creates right drive motor group with ports 4, 5, and 6
+pros::Imu inertial(11);												// Creates inertial sensor on port 10
+pros::Rotation hTrack(12);											// Creates horizontal tracking wheel on port 11
+//pros::Rotation vTrack(13);											// Creates vertical tracking wheel on port 12
+
+// LemLib Declarations
+lemlib::Drivetrain drivetrain(&left_mg, // Left Motor Group
+							  &right_mg, // Right Motor Group
+							  12.625, // Track Width in inches
+							  lemlib::Omniwheel::NEW_325, // Anti-Static 3.25" Omni Wheels
+							  450, // Drivetrain Speed in RPM
+							  2 // Horizontal Drift (WILL BE ADJUSTED LATER)
+);
+
+lemlib::TrackingWheel horizontalTrack(&hTrack, // Horizontal Tracking Wheel Rotation Sensor
+									  lemlib::Omniwheel::NEW_325, // AS 3.25" Omni Wheel (For Now)
+									  -1.5 // Distance from robot center in inches (For Now)
+);
+
+/*
+lemlib::TrackingWheel verticalTrack(&vTrack, // Vertical Tracking Wheel Rotation Sensor
+									lemlib::Omniwheel:: [TBD] , // Wheel TBD
+									[TBD] // Distance from robot center TBD
+);
+*/
+
+lemlib::OdomSensors sensors(nullptr, // vertical tracking wheel 1, set to null (For Now)
+                            nullptr, // vertical tracking wheel 2, set to null
+                            &horizontalTrack, // horizontal tracking wheel 1, set to horizontal rotation sensor. 
+                            nullptr, // horizontal tracking wheel 2, set to null
+                            &inertial // inertial sensor, set to inertial sensor device
+);
+
+// These are all default values and will be adjusted later after testing!!
+lemlib::ControllerSettings lateral_controller(10, // proportional gain (kP)
+                                              0, // integral gain (kI)
+                                              3, // derivative gain (kD)
+                                              3, // anti windup
+                                              1, // small error range, in inches
+                                              100, // small error range timeout, in milliseconds
+                                              3, // large error range, in inches
+                                              500, // large error range timeout, in milliseconds
+                                              20 // maximum acceleration (slew)
+);
+
+lemlib::ControllerSettings angular_controller(2, // proportional gain (kP)
+                                              0, // integral gain (kI)
+                                              10, // derivative gain (kD)
+                                              3, // anti windup
+                                              1, // small error range, in degrees
+                                              100, // small error range timeout, in milliseconds
+                                              3, // large error range, in degrees
+                                              500, // large error range timeout, in milliseconds
+                                              0 // maximum acceleration (slew)
+);
+
+lemlib::Chassis chassis(drivetrain, // drivetrain settings
+                        lateral_controller, // lateral PID settings
+                        angular_controller, // angular PID settings
+                        sensors // odometry sensors
+);
+
+// When Start
+void initialize() {
+	inertial.reset(); // Reset the inertial sensor
+	hTrack.reset(); // Reset the horizontal tracking wheel
+//	vTrack.reset(); // Reset the vertical tracking wheel (if used)
+	chassis.calibrate(); // Calibrate the chassis sensors
+}
+
+// When Disabled
+void disabled() {}
+
+// When Connected to Field Control
+void competition_initialize() {}
+
+// When Autonomous
+void autonomous() {
+	chassis.setPose(0, 0, 0);
+	pros::delay(5000);
+	chassis.moveToPose(48, 0, 0, 5000);
+}
+
+// When Driver Control
+void opcontrol() {
+	while (true) {
+		int left = primary.get_analog(ANALOG_LEFT_Y); // Gets Left Stick Up/Down Value
+		int right = primary.get_analog(ANALOG_RIGHT_Y); // Gets Right Stick Up/Down Value
+		chassis.tank(left, right);
+		pros::delay(10);
+	}
+}
