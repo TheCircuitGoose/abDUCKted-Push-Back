@@ -13,7 +13,6 @@ pros::MotorGroup left_mg({-1, -2, 3}, pros::MotorGearset::blue);	// Creates left
 pros::MotorGroup right_mg({4, 5, -6}, pros::MotorGearset::blue);	// Creates right drive motor group with ports 4, 5, and 6
 pros::Imu inertial(11);												// Creates inertial sensor on port 10
 pros::Rotation hTrack(12);											// Creates horizontal tracking wheel on port 11
-//pros::Rotation vTrack(13);											// Creates vertical tracking wheel on port 12
 
 // LemLib Declarations
 lemlib::Drivetrain drivetrain(&left_mg, // Left Motor Group
@@ -26,15 +25,8 @@ lemlib::Drivetrain drivetrain(&left_mg, // Left Motor Group
 
 lemlib::TrackingWheel horizontalTrack(&hTrack, // Horizontal Tracking Wheel Rotation Sensor
 									  lemlib::Omniwheel::NEW_325, // AS 3.25" Omni Wheel (For Now)
-									  -1.5 // Distance from robot center in inches (For Now)
+									  1 // Distance from robot center in inches
 );
-
-/*
-lemlib::TrackingWheel verticalTrack(&vTrack, // Vertical Tracking Wheel Rotation Sensor
-									lemlib::Omniwheel:: [TBD] , // Wheel TBD
-									[TBD] // Distance from robot center TBD
-);
-*/
 
 lemlib::OdomSensors sensors(nullptr, // vertical tracking wheel 1, set to null (For Now)
                             nullptr, // vertical tracking wheel 2, set to null
@@ -76,7 +68,6 @@ lemlib::Chassis chassis(drivetrain, // drivetrain settings
 void initialize() {
 	inertial.reset(); // Reset the inertial sensor
 	hTrack.reset(); // Reset the horizontal tracking wheel
-//	vTrack.reset(); // Reset the vertical tracking wheel (if used)
 	chassis.calibrate(); // Calibrate the chassis sensors
 }
 
