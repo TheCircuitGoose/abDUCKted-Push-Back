@@ -106,9 +106,9 @@ void opcontrol() {
 		chassis.tank(left, right);
 
         if (primary.get_digital(DIGITAL_L1)) {
-            intake_mg.move_velocity(127);
+            intake_mg.move_velocity(200);
         } else if (primary.get_digital(DIGITAL_L2)) {
-            intake_mg.move_velocity(-127);
+            intake_mg.move_velocity(-200);
         } else {
             intake_mg.move_velocity(0);
         }
