@@ -14,22 +14,32 @@ pros::MotorGroup right_mg({4, 7, -8}, pros::MotorGearset::blue);	// Creates righ
 pros::MotorGroup intake_mg({9, -10});	                            // Creates intake motor group with ports 7 and 8
 pros::Imu inertial(11);												// Creates inertial sensor on port 10
 pros::Rotation hTrack(12);											// Creates horizontal tracking wheel on port 11
+pros::Rotation vTrack(13);                                          // Creates vertical tracking wheel on port 12
 
 // LemLib Declarations
+// Drivetrain Configuration
 lemlib::Drivetrain drivetrain(&left_mg, // Left Motor Group
 							  &right_mg, // Right Motor Group
-							  12.625, // Track Width in inches
+							  12.625, // Track Width in inches (distance from left to right wheels)
 							  lemlib::Omniwheel::NEW_325, // Anti-Static 3.25" Omni Wheels
 							  450, // Drivetrain Speed in RPM
 							  2 // Horizontal Drift (WILL BE ADJUSTED LATER)
 );
 
+// Horizontal Tracking Wheel Configuration
 lemlib::TrackingWheel horizontalTrack(&hTrack, // Horizontal Tracking Wheel Rotation Sensor
-									  lemlib::Omniwheel::NEW_325, // AS 3.25" Omni Wheel (For Now)
-									  1 // Distance from robot center in inches
+									  lemlib::Omniwheel::NEW_325, // AS 3.25" Omni Wheel
+									  1 // Distance from robot center in inches (Positive for forward)
 );
 
-lemlib::OdomSensors sensors(nullptr, // vertical tracking wheel 1, set to null (For Now)
+// Vertical Tracking Wheel Configuration
+lemlib::TrackingWheel verticalTrack(&vTrack, // Vertical Tracking Wheel Rotation Sensor
+                                      lemlib::Omniwheel::NEW_325, // AS 3.25" Omni Wheel
+                                      -.5 // Distance from robot center in inches (Negative for Left Side)
+);
+
+// Odometry Sensors Configuration
+lemlib::OdomSensors sensors(&verticalTrack, // vertical tracking wheel 1, set to vertical rotation sensor.
                             nullptr, // vertical tracking wheel 2, set to null
                             &horizontalTrack, // horizontal tracking wheel 1, set to horizontal rotation sensor. 
                             nullptr, // horizontal tracking wheel 2, set to null
@@ -37,6 +47,7 @@ lemlib::OdomSensors sensors(nullptr, // vertical tracking wheel 1, set to null (
 );
 
 // Work in Progess
+// Lateral PID Controller Configuration
 lemlib::ControllerSettings lateral_controller(300, // proportional gain (kP)
                                               20, // integral gain (kI)
                                               0, // derivative gain (kD)
@@ -48,6 +59,7 @@ lemlib::ControllerSettings lateral_controller(300, // proportional gain (kP)
                                               0 // maximum acceleration (slew)
 );
 
+//Angular PID Controller Configuration
 lemlib::ControllerSettings angular_controller(2, // proportional gain (kP)
                                               0, // integral gain (kI)
                                               10, // derivative gain (kD)
@@ -69,6 +81,7 @@ lemlib::Chassis chassis(drivetrain, // drivetrain settings
 void initialize() {
 	inertial.reset(); // Reset the inertial sensor
 	hTrack.reset(); // Reset the horizontal tracking wheel
+    vTrack.reset(); // Reset the vertical tracking wheel
 	chassis.calibrate(); // Calibrate the chassis sensors
 }
 
