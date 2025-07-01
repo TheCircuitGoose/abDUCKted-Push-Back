@@ -3,18 +3,28 @@
 
 #include <iostream>
 #include <thread>
+#include <string>
 
 #include "liblvgl/lvgl.h"
 #include "lemlib/api.hpp"
 
 // Device Declarations
 pros::Controller primary(pros::E_CONTROLLER_MASTER);				// Creates primary controller
+
+pros::Motor left1(-1, pros::MotorGearset::blue);
+pros::Motor left2(-2, pros::MotorGearset::blue);
+pros::Motor left3(3, pros::MotorGearset::blue);
+pros::Motor right1(4, pros::MotorGearset::blue);
+pros::Motor right2(7, pros::MotorGearset::blue);
+pros::Motor right3(-8, pros::MotorGearset::blue);
+
 pros::MotorGroup left_mg({-1, -2, 3}, pros::MotorGearset::blue);	// Creates left drive motor group with ports 1, 2, and 3
 pros::MotorGroup right_mg({4, 7, -8}, pros::MotorGearset::blue);	// Creates right drive motor group with ports 4, 5, and 6
+
 pros::MotorGroup intake_mg({9, -10});	                            // Creates intake motor group with ports 7 and 8
 pros::Imu inertial(11);												// Creates inertial sensor on port 10
 pros::Rotation hTrack(12);											// Creates horizontal tracking wheel on port 11
-pros::Rotation vTrack(13);                                          // Creates vertical tracking wheel on port 12
+pros::Rotation vTrack(-13);                                          // Creates vertical tracking wheel on port 12
 
 // LemLib Declarations
 // Drivetrain Configuration
@@ -35,7 +45,7 @@ lemlib::TrackingWheel horizontalTrack(&hTrack, // Horizontal Tracking Wheel Rota
 // Vertical Tracking Wheel Configuration
 lemlib::TrackingWheel verticalTrack(&vTrack, // Vertical Tracking Wheel Rotation Sensor
                                       lemlib::Omniwheel::NEW_325, // AS 3.25" Omni Wheel
-                                      -.5 // Distance from robot center in inches (Negative for Left Side)
+                                      -.25 // Distance from robot center in inches (Negative for Left Side)
 );
 
 // Odometry Sensors Configuration
@@ -48,9 +58,9 @@ lemlib::OdomSensors sensors(&verticalTrack, // vertical tracking wheel 1, set to
 
 // Work in Progess
 // Lateral PID Controller Configuration
-lemlib::ControllerSettings lateral_controller(300, // proportional gain (kP)
-                                              20, // integral gain (kI)
-                                              0, // derivative gain (kD)
+lemlib::ControllerSettings lateral_controller(4, // proportional gain (kP)
+                                              0, // integral gain (kI)
+                                              12, // derivative gain (kD)
                                               0, // anti windup
                                               0, // small error range, in inches
                                               0, // small error range timeout, in milliseconds
@@ -77,12 +87,45 @@ lemlib::Chassis chassis(drivetrain, // drivetrain settings
                         sensors // odometry sensors
 );
 
+bool isLogging = false;
+int targetDistance = 0;
+
+void logTask() {
+    FILE* logFile = fopen("/usd/log.csv", "a"); // Open log file on sd card for appending
+    fwrite("Time,Left,Right,Avg,Error\n", 1, 27, logFile);
+    int time = 0;
+
+    while (true) {
+        if (isLogging) {
+            int leftVelocity = left1.get_actual_velocity(); // Get the velocity of left motor 1
+            int rightVelocity = right1.get_actual_velocity(); // Get the velocity of right motor 1
+            int avgVelocity = (leftVelocity + rightVelocity) / 2; // Calculate average velocity
+
+            float distance = chassis.getPose().y; // Get the current distance from the start position
+            float error = targetDistance - distance; // Calculate error from target position
+            
+            std::string logMessage = std::to_string(time) +
+                "," + std::to_string(leftVelocity) + 
+                "," + std::to_string(rightVelocity) + 
+                "," + std::to_string(avgVelocity) +
+                "," + std::to_string(error) + "\n";
+
+            fwrite(logMessage.c_str(), 1, logMessage.size(), logFile);
+
+            time += 10;
+        }
+        pros::delay(10);
+    }
+}
+
 // When Start
 void initialize() {
 	inertial.reset(); // Reset the inertial sensor
 	hTrack.reset(); // Reset the horizontal tracking wheel
     vTrack.reset(); // Reset the vertical tracking wheel
 	chassis.calibrate(); // Calibrate the chassis sensors
+
+    pros::Task logTaskObj(logTask);
 }
 
 // When Disabled
@@ -93,13 +136,18 @@ void competition_initialize() {}
 
 // When Autonomous
 void autonomous() {
+    chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
+    pros::delay(4750);
 	chassis.setPose(0, 0, 0);
-	pros::delay(5000);
-	chassis.moveToPose(0, 72, 0, 5000);
+    isLogging = true; // Start logging data
+	pros::delay(250);
+    targetDistance = 72;
+	chassis.moveToPose(0, 72, 0, 10000);
 }
 
 // When Driver Control
 void opcontrol() {
+    chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST); // Set the brake mode to brake
 	while (true) {
 		int left = primary.get_analog(ANALOG_LEFT_Y); // Gets Left Stick Up/Down Value
 		int right = primary.get_analog(ANALOG_RIGHT_Y); // Gets Right Stick Up/Down Value
