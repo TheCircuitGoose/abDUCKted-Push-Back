@@ -9,6 +9,7 @@
 #include "lemlib/api.hpp"
 
 // Device Declarations
+// Ports 5, 6, and 9 are Dead =(
 pros::Controller primary(pros::E_CONTROLLER_MASTER);				// Creates primary controller
 
 pros::Motor left1(-1, pros::MotorGearset::blue);
@@ -21,7 +22,7 @@ pros::Motor right3(-8, pros::MotorGearset::blue);
 pros::MotorGroup left_mg({-1, -2, 3}, pros::MotorGearset::blue);	// Creates left drive motor group with ports 1, 2, and 3
 pros::MotorGroup right_mg({4, 7, -8}, pros::MotorGearset::blue);	// Creates right drive motor group with ports 4, 5, and 6
 
-pros::MotorGroup intake_mg({9, -10});	                            // Creates intake motor group with ports 7 and 8
+pros::MotorGroup intake_mg({-10, 14});	                            // Creates intake motor group with ports 7 and 8
 pros::Imu inertial(11);												// Creates inertial sensor on port 10
 pros::Rotation hTrack(12);											// Creates horizontal tracking wheel on port 11
 pros::Rotation vTrack(-13);                                          // Creates vertical tracking wheel on port 12
