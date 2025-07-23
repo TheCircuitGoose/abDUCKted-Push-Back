@@ -23,6 +23,8 @@ pros::MotorGroup left_mg({-1, -2, 3}, pros::MotorGearset::blue);	// Creates left
 pros::MotorGroup right_mg({4, 7, -8}, pros::MotorGearset::blue);	// Creates right drive motor group with ports 4, 5, and 6
 
 pros::MotorGroup intake_mg({-10, 14});	                            // Creates intake motor group with ports 7 and 8
+pros::Motor conveyor(15);
+
 pros::Imu inertial(11);												// Creates inertial sensor on port 10
 pros::Rotation hTrack(12);											// Creates horizontal tracking wheel on port 11
 pros::Rotation vTrack(-13);                                          // Creates vertical tracking wheel on port 12
@@ -160,6 +162,14 @@ void opcontrol() {
             intake_mg.move_velocity(-200);
         } else {
             intake_mg.move_velocity(0);
+        }
+
+         if (primary.get_digital(DIGITAL_R1)) {
+            conveyor.move_velocity(200);
+        } else if (primary.get_digital(DIGITAL_R2)) {
+            conveyor.move_velocity(-200);
+        } else {
+            conveyor.move_velocity(0);
         }
         
 		pros::delay(10);
