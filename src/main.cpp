@@ -22,7 +22,7 @@ pros::Motor right3(-8, pros::MotorGearset::blue);
 pros::MotorGroup left_mg({-1, -2, 3}, pros::MotorGearset::blue);	// Creates left drive motor group with ports 1, 2, and 3
 pros::MotorGroup right_mg({4, 7, -8}, pros::MotorGearset::blue);	// Creates right drive motor group with ports 4, 5, and 6
 
-pros::MotorGroup intake_mg({-10, 14});	                            // Creates intake motor group with ports 7 and 8
+pros::MotorGroup intake_mg({10, -14});	                            // Creates intake motor group with ports 7 and 8
 pros::Motor conveyor(15);
 
 pros::Imu inertial(11);												// Creates inertial sensor on port 10
