@@ -10,7 +10,8 @@
 
 // Device Declarations
 // Ports 5, 6, and 9 are Dead =(
-pros::Controller primary(pros::E_CONTROLLER_MASTER);				// Creates primary controller
+pros::Controller driver(pros::E_CONTROLLER_MASTER);				// Creates primary controller
+pros::Controller partner(pros::E_CONTROLLER_PARTNER);           // Creates secondary controller
 
 pros::Motor left1(-1, pros::MotorGearset::blue);
 pros::Motor left2(-2, pros::MotorGearset::blue);
@@ -23,7 +24,11 @@ pros::MotorGroup left_mg({-1, -2, 3}, pros::MotorGearset::blue);	// Creates left
 pros::MotorGroup right_mg({4, 7, -8}, pros::MotorGearset::blue);	// Creates right drive motor group with ports 4, 5, and 6
 
 pros::MotorGroup intake_mg({10, -14});	                            // Creates intake motor group with ports 7 and 8
-pros::MotorGroup conveyor({15, -16});
+pros::Motor lower_conveyor(15);                                     // Creates lower conveyor motor on port 15
+pros::Motor upper_conveyor(16);                                     // Creates upper conveyor motor on port 16
+
+pros::ADIDigitalOut leftLift('A');
+pros::ADIDigitalOut rightLift('B');
 
 pros::Imu inertial(11);												// Creates inertial sensor on port 10
 pros::Rotation hTrack(12);											// Creates horizontal tracking wheel on port 11
@@ -152,24 +157,52 @@ void autonomous() {
 void opcontrol() {
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST); // Set the brake mode to brake
 	while (true) {
-		int left = primary.get_analog(ANALOG_LEFT_Y); // Gets Left Stick Up/Down Value
-		int right = primary.get_analog(ANALOG_RIGHT_Y); // Gets Right Stick Up/Down Value
+		int left = driver.get_analog(ANALOG_LEFT_Y); // Gets Left Stick Up/Down Value
+		int right = driver.get_analog(ANALOG_RIGHT_Y); // Gets Right Stick Up/Down Value
 		chassis.tank(left, right);
 
-        if (primary.get_digital(DIGITAL_L1)) {
+        if (driver.get_digital(DIGITAL_L1) || partner.get_digital(DIGITAL_L1)) {
             intake_mg.move_velocity(200);
-        } else if (primary.get_digital(DIGITAL_L2)) {
+        } else if (driver.get_digital(DIGITAL_L2) || partner.get_digital(DIGITAL_L2)) {
             intake_mg.move_velocity(-200);
         } else {
             intake_mg.move_velocity(0);
         }
 
-         if (primary.get_digital(DIGITAL_R1)) {
-            conveyor.move_velocity(200);
-        } else if (primary.get_digital(DIGITAL_R2)) {
-            conveyor.move_velocity(-200);
+        if (driver.get_digital(DIGITAL_R1) || partner.get_digital(DIGITAL_R1)) {
+            lower_conveyor.move_velocity(200);
+            upper_conveyor.move_velocity(200);
+        } else if (driver.get_digital(DIGITAL_R2) || partner.get_digital(DIGITAL_R2)) {
+            lower_conveyor.move_velocity(-200);
+            upper_conveyor.move_velocity(-200);
         } else {
-            conveyor.move_velocity(0);
+            lower_conveyor.move_velocity(0);
+            upper_conveyor.move_velocity(0);
+        }
+
+        if (partner.get_digital(DIGITAL_UP)) {
+            lower_conveyor.move_velocity(200);
+        } else if (partner.get_digital(DIGITAL_DOWN)) {
+            lower_conveyor.move_velocity(-200);
+        } else {
+            lower_conveyor.move_velocity(0);
+        }
+
+        if (partner.get_digital(DIGITAL_X)) {
+            upper_conveyor.move_velocity(200);
+        } else if (partner.get_digital(DIGITAL_B)) {
+            upper_conveyor.move_velocity(-200);
+        } else {
+            upper_conveyor.move_velocity(0);
+        }
+
+        if (driver.get_digital(DIGITAL_A) || partner.get_digital(DIGITAL_A)) {
+            leftLift.set_value(true);
+            rightLift.set_value(true);
+        } 
+        if (driver.get_digital(DIGITAL_Y) || partner.get_digital(DIGITAL_Y)) {
+            leftLift.set_value(false);
+            rightLift.set_value(false);
         }
         
 		pros::delay(10);
