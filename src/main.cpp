@@ -9,7 +9,7 @@
 #include "lemlib/api.hpp"
 
 // Device Declarations
-// Ports 5, 6, and 9 are Dead =(
+// Ports 5, 6, 9, and 13 are Dead =(
 pros::Controller driver(pros::E_CONTROLLER_MASTER);				// Creates primary controller
 pros::Controller partner(pros::E_CONTROLLER_PARTNER);           // Creates secondary controller
 
@@ -21,18 +21,18 @@ pros::Motor right2(7, pros::MotorGearset::blue);
 pros::Motor right3(-8, pros::MotorGearset::blue);
 
 pros::MotorGroup left_mg({-1, -2, 3}, pros::MotorGearset::blue);	// Creates left drive motor group with ports 1, 2, and 3
-pros::MotorGroup right_mg({4, 7, -8}, pros::MotorGearset::blue);	// Creates right drive motor group with ports 4, 5, and 6
+pros::MotorGroup right_mg({4, 7, -8}, pros::MotorGearset::blue);	// Creates right drive motor group with ports 4, 7, and 8
 
-pros::MotorGroup intake_mg({10, -14});	                            // Creates intake motor group with ports 7 and 8
+pros::MotorGroup intake_mg({10, -14});	                            // Creates intake motor group with ports 10 and 14
 pros::Motor lower_conveyor(15);                                     // Creates lower conveyor motor on port 15
 pros::Motor upper_conveyor(16);                                     // Creates upper conveyor motor on port 16
 
 pros::ADIDigitalOut leftLift('A');
 pros::ADIDigitalOut rightLift('B');
 
-pros::Imu inertial(11);												// Creates inertial sensor on port 10
+pros::Imu inertial(11);												// Creates inertial sensor on port 11
 pros::Rotation hTrack(12);											// Creates horizontal tracking wheel on port 11
-pros::Rotation vTrack(-13);                                          // Creates vertical tracking wheel on port 12
+pros::Rotation vTrack(-17);                                          // Creates vertical tracking wheel on port 17
 
 // LemLib Declarations
 // Drivetrain Configuration
@@ -66,9 +66,9 @@ lemlib::OdomSensors sensors(&verticalTrack, // vertical tracking wheel 1, set to
 
 // Work in Progess
 // Lateral PID Controller Configuration
-lemlib::ControllerSettings lateral_controller(4, // proportional gain (kP)
+lemlib::ControllerSettings lateral_controller(5.5, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              12, // derivative gain (kD)
+                                              0, // derivative gain (kD)
                                               0, // anti windup
                                               0, // small error range, in inches
                                               0, // small error range timeout, in milliseconds
