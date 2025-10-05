@@ -8,6 +8,8 @@
 #include "liblvgl/lvgl.h"
 #include "lemlib/api.hpp"
 
+#include "project/auton.hpp"
+
 // Device Declarations
 // Ports 5, 6, 9, and 13 are Dead =(
 pros::Controller driver(pros::E_CONTROLLER_MASTER);				// Creates primary controller
@@ -126,6 +128,30 @@ void logTask() {
     }
 }
 
+// UI Declarations
+int autonIndex = 0;													// Declares an int for storing the selected auton routine.
+int colorIndex = 0;													// Declares an int for storing the selected color.
+lv_obj_t * activeScreen = lv_obj_create(lv_scr_act());				// Creates activeScreen parent object
+lv_obj_t * autonRoller = lv_roller_create(activeScreen);			// Creates a roller object as a child of the activeScreen parent
+lv_obj_t * colorRoller = lv_roller_create(activeScreen);			// Creates a roller object as a child of the activeScreen parent`
+
+void color_roller_event_handler(lv_event_t * e) { // change color of color selector
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t * roller = lv_event_get_target(e);
+
+    if (code == LV_EVENT_VALUE_CHANGED) {
+        int selected = lv_roller_get_selected(roller);
+        if (selected == 1) { // Red
+            lv_obj_set_style_bg_color(roller, lv_color_hex(0xFF0000), LV_PART_SELECTED);
+        } else if (selected == 2) { // Blue
+            lv_obj_set_style_bg_color(roller, lv_color_hex(0x0000FF), LV_PART_SELECTED);
+        } else {
+			lv_obj_set_style_bg_color(roller, lv_color_hex(0xFFFF00), LV_PART_SELECTED);
+		};
+    };
+}
+
+
 // When Start
 void initialize() {
 	inertial.reset(); // Reset the inertial sensor
@@ -134,6 +160,60 @@ void initialize() {
 	chassis.calibrate(); // Calibrate the chassis sensors
 
     pros::Task logTaskObj(logTask);
+
+    inertial.reset();
+	hTrack.reset();
+    vTrack.reset();
+	chassis.calibrate();
+	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
+
+	lv_obj_set_style_text_font(										// Set font size to 36 pt.
+		lv_scr_act(), 
+		&lv_font_montserrat_18, 
+		LV_PART_MAIN | LV_STATE_DEFAULT
+	);
+	// Configure Auton Roller
+	lv_obj_set_size(activeScreen, 480, 220);						// Configure size & position of activeScreen Parent
+	lv_obj_center(activeScreen);
+    lv_roller_set_options(											// Configure Roller
+		autonRoller, 
+		auton::autonNames.c_str(), 
+		LV_ROLLER_MODE_NORMAL
+	);
+    lv_roller_set_visible_row_count(autonRoller, 4);
+    lv_obj_set_style_bg_color(										// Set highlight color of selected choice to a bold yellow
+		autonRoller, 
+		lv_color_hex(0xFFFF00), 
+		LV_PART_SELECTED
+	);
+    lv_obj_set_style_text_color(									// Set text color to black
+		autonRoller, 
+		lv_color_hex(0x000000), 
+		LV_PART_SELECTED
+	);
+	lv_obj_set_size(autonRoller, 238, 220);							// Configure size & position of roller object
+	lv_obj_align(autonRoller, LV_ALIGN_LEFT_MID, 0, 0);
+
+	// Configure Color Roller
+	lv_roller_set_options(
+		colorRoller,
+		color::colorNames.c_str(),
+		LV_ROLLER_MODE_NORMAL
+	);
+	lv_roller_set_visible_row_count(colorRoller, 2);
+	lv_obj_set_style_bg_color(
+		colorRoller,
+		lv_color_hex(0xFFFF00),
+		LV_PART_SELECTED
+	);
+	lv_obj_set_style_text_color(
+		colorRoller,
+		lv_color_hex(0x000000),
+		LV_PART_SELECTED
+	);
+	lv_obj_set_size(colorRoller, 238, 220);						// Configure size & position of roller object
+	lv_obj_align(colorRoller, LV_ALIGN_RIGHT_MID, 0, 0);
+	lv_obj_add_event_cb(colorRoller, color_roller_event_handler, LV_EVENT_ALL, NULL);
 }
 
 // When Disabled
@@ -144,13 +224,58 @@ void competition_initialize() {}
 
 // When Autonomous
 void autonomous() {
-    chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
-    pros::delay(4750);
-	chassis.setPose(0, 0, 0);
-    isLogging = true; // Start logging data
-	pros::delay(250);
-    targetDistance = 72;
-	chassis.moveToPose(0, 72, 0, 10000);
+    autonIndex = lv_roller_get_selected(autonRoller);
+    colorIndex = lv_roller_get_selected(colorRoller);
+    switch (autonIndex) {
+        case 1: // Left
+            chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
+            chassis.setPose(-50, 18, 180);
+            pros::delay(10);
+            chassis.moveToPose(-50, 48, 270, 3000);
+            chassis.moveToPose(-54, 48, 270, 3000, {.maxSpeed = 75});
+            intake_mg.move_velocity(200);
+            lower_conveyor.move_velocity(200);
+            pros::delay(2000);
+            intake_mg.move_velocity(0);
+            lower_conveyor.move_velocity(0);
+            chassis.moveToPose(-50, 48, 270, 2000, {.forwards = false});
+            leftLift.set_value(true);
+            rightLift.set_value(true);
+            chassis.moveToPose(-32, 48, 90, 3000);
+            lower_conveyor.move_velocity(200);
+            upper_conveyor.move_velocity(200);
+            pros::delay(2000);
+            lower_conveyor.move_velocity(0);
+            upper_conveyor.move_velocity(0);
+        case 2: // Right
+            chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
+            chassis.setPose(-50, -18, 180);
+            pros::delay(10);
+            chassis.moveToPose(-50, -48, 270, 3000);
+            chassis.moveToPose(-54, -48, 270, 3000, {.maxSpeed = 75});
+            intake_mg.move_velocity(200);
+            lower_conveyor.move_velocity(200);
+            pros::delay(2000);
+            intake_mg.move_velocity(0);
+            lower_conveyor.move_velocity(0);
+            chassis.moveToPose(-50, -48, 270, 2000, {.forwards = false});
+            leftLift.set_value(true);
+            rightLift.set_value(true);
+            chassis.moveToPose(-32, -48, 90, 3000);
+            lower_conveyor.move_velocity(200);
+            upper_conveyor.move_velocity(200);
+            pros::delay(2000);
+            lower_conveyor.move_velocity(0);
+            upper_conveyor.move_velocity(0);
+        case 3: // PID Tuning
+            chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
+            pros::delay(4750);
+            chassis.setPose(0, 0, 0);
+            isLogging = true; // Start logging data
+            pros::delay(250);
+            targetDistance = 72;
+            chassis.moveToPose(0, 72, 0, 10000);
+    }
 }
 
 // When Driver Control
