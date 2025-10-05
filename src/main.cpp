@@ -1,6 +1,7 @@
 // Include Libraries
 #include "main.h"
 
+#include <iostream>
 #include <thread>
 #include <string>
 
@@ -137,20 +138,18 @@ UI ui;
 
 // When Start
 void initialize() {
-    lv_init();
-
-    inertial.reset(); // Reset the inertial sensor
-    hTrack.reset(); // Reset the horizontal tracking wheel
+	inertial.reset(); // Reset the inertial sensor
+	hTrack.reset(); // Reset the horizontal tracking wheel
     vTrack.reset(); // Reset the vertical tracking wheel
-    chassis.calibrate(); // Calibrate the chassis sensors
+	chassis.calibrate(); // Calibrate the chassis sensors
 
     pros::Task logTaskObj(logTask);
 
     inertial.reset();
-    hTrack.reset();
+	hTrack.reset();
     vTrack.reset();
-    chassis.calibrate();
-    chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
+	chassis.calibrate();
+	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
 
     ui.initUI(lv_scr_act());
 }
