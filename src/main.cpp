@@ -168,7 +168,7 @@ void autonomous() {
     switch (autonIndex) {
         case 1: // Left
             chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
-            chassis.setPose(-50, 18, 180); // set starting position, touching parking zone
+            chassis.setPose(-50, 16, 0); // set starting position, touching parking zone
             pros::delay(10);
             chassis.moveToPose(-50, 48, 270, 3000); // drive to match loader
             chassis.moveToPose(-54, 48, 270, 3000, {.maxSpeed = 75});
@@ -186,9 +186,9 @@ void autonomous() {
                 lower_conveyor.move_velocity(0);
             }
             chassis.moveToPose(-50, 48, 270, 2000, {.forwards = false}); // go to long goal
-            leftLift.set_value(true); // raise lift
-            rightLift.set_value(true);
-            chassis.moveToPose(-32, 48, 90, 3000);
+            leftLift.set_value(false); // raise lift
+            rightLift.set_value(false);
+            chassis.moveToPose(-28, 48, 90, 3000);
             lower_conveyor.move_velocity(200); // score
             upper_conveyor.move_velocity(200);
             pros::delay(5000);
@@ -196,7 +196,7 @@ void autonomous() {
             upper_conveyor.move_velocity(0);
         case 2: // Right
             chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
-            chassis.setPose(-50, -18, 180);
+            chassis.setPose(-50, -16, 180);
             pros::delay(10);
             chassis.moveToPose(-50, -48, 270, 3000);
             chassis.moveToPose(-54, -48, 270, 3000, {.maxSpeed = 75});
@@ -214,9 +214,9 @@ void autonomous() {
                 lower_conveyor.move_velocity(0);
             }
             chassis.moveToPose(-50, -48, 270, 2000, {.forwards = false});
-            leftLift.set_value(true);
-            rightLift.set_value(true);
-            chassis.moveToPose(-32, -48, 90, 3000);
+            leftLift.set_value(false);
+            rightLift.set_value(false);
+            chassis.moveToPose(-28, -48, 90, 3000);
             lower_conveyor.move_velocity(200);
             upper_conveyor.move_velocity(200);
             pros::delay(5000);
