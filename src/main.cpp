@@ -10,6 +10,8 @@
 #include "project/auton.hpp"
 #include "project/ui.hpp"
 
+#define TORQUE_THRESHOLD 0.15
+
 // Device Declarations
 // Ports 5, 6, 9, and 13 are Dead =(
 pros::Controller driver(pros::E_CONTROLLER_MASTER);				// Creates primary controller
@@ -26,8 +28,8 @@ pros::MotorGroup left_mg({-1, -2, 3}, pros::MotorGearset::blue);	// Creates left
 pros::MotorGroup right_mg({4, 7, -8}, pros::MotorGearset::blue);	// Creates right drive motor group with ports 4, 7, and 8
 
 pros::MotorGroup intake_mg({10, -14});	                            // Creates intake motor group with ports 10 and 14
-pros::Motor lower_conveyor(15);                                     // Creates lower conveyor motor on port 15
-pros::Motor upper_conveyor(16);                                     // Creates upper conveyor motor on port 16
+pros::Motor lower_conveyor(-15);                                     // Creates lower conveyor motor on port 15
+pros::Motor upper_conveyor(-16);                                     // Creates upper conveyor motor on port 16
 
 pros::ADIDigitalOut leftLift('A');
 pros::ADIDigitalOut rightLift('B');
@@ -152,7 +154,7 @@ void initialize() {
     chassis.calibrate();
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
 
-    ui.initUI(lv_scr_act());
+    ui.initUI_NEW(lv_scr_act());
 }
 
 // When Disabled
@@ -168,11 +170,14 @@ void autonomous() {
     switch (autonIndex) {
         case 1: // Left
             chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
-            chassis.setPose(-50, 16, 0); // set starting position, touching parking zone
+            chassis.setPose(-50, 18, 0); // set starting position, touching parking zone
+            leftLift.set_value(false);
+            rightLift.set_value(false);
             pros::delay(10);
-            chassis.moveToPose(-50, 48, 270, 3000); // drive to match loader
-            chassis.moveToPose(-54, 48, 270, 3000, {.maxSpeed = 75});
-            intake_mg.move_velocity(200); //unload
+            chassis.moveToPoint(-50, 48, 3000); // drive to match loader
+            chassis.turnToHeading(270, 1000);
+            chassis.moveToPoint(-59, 48, 3000, {.maxSpeed = 75});
+            intake_mg.move_velocity(-200); //unload
             lower_conveyor.move_velocity(200);
             if (colorIndex != 0) {
                 while (get_color(intake_color) != colorIndex) { // wait until other color shows if using color sensing
@@ -185,18 +190,20 @@ void autonomous() {
                 intake_mg.move_velocity(0);
                 lower_conveyor.move_velocity(0);
             }
-            chassis.moveToPose(-50, 48, 270, 2000, {.forwards = false}); // go to long goal
-            leftLift.set_value(false); // raise lift
-            rightLift.set_value(false);
-            chassis.moveToPose(-28, 48, 90, 3000);
+            chassis.moveToPose(-44, 48, 270, 2000, {.forwards = false}); // go to long goal
+            pros::delay(100);
+            chassis.moveToPose(-26, 48, 90, 3000);
+            pros::delay(2500);
             lower_conveyor.move_velocity(200); // score
             upper_conveyor.move_velocity(200);
+            intake_mg.move_velocity(-200);
             pros::delay(5000);
             lower_conveyor.move_velocity(0);
             upper_conveyor.move_velocity(0);
+            intake_mg.move_velocity(0);
         case 2: // Right
             chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
-            chassis.setPose(-50, -16, 180);
+            chassis.setPose(-50, -18, 180);
             pros::delay(10);
             chassis.moveToPose(-50, -48, 270, 3000);
             chassis.moveToPose(-54, -48, 270, 3000, {.maxSpeed = 75});
@@ -236,55 +243,123 @@ void autonomous() {
 // When Driver Control
 void opcontrol() {
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST); // Set the brake mode to brake
-	while (true) {
-		int left = driver.get_analog(ANALOG_LEFT_Y); // Gets Left Stick Up/Down Value
-		int right = driver.get_analog(ANALOG_RIGHT_Y); // Gets Right Stick Up/Down Value
-		chassis.tank(left, right);
+    int partnerIndex = ui.getPartnerIndex();
+    if (partnerIndex == 0) {
+        while (true) {
+            int left = driver.get_analog(ANALOG_LEFT_Y); // Gets Left Stick Up/Down Value
+            int right = driver.get_analog(ANALOG_RIGHT_Y); // Gets Right Stick Up/Down Value
+            chassis.tank(left, right);
 
-        if (driver.get_digital(DIGITAL_L1) || partner.get_digital(DIGITAL_L1)) {
-            intake_mg.move_velocity(200);
-        } else if (driver.get_digital(DIGITAL_L2) || partner.get_digital(DIGITAL_L2)) {
-            intake_mg.move_velocity(-200);
-        } else {
-            intake_mg.move_velocity(0);
-        }
+            if (driver.get_digital(DIGITAL_L1) || partner.get_digital(DIGITAL_L1)) {
+                intake_mg.move_velocity(200);
+            } else if (driver.get_digital(DIGITAL_L2) || partner.get_digital(DIGITAL_L2)) {
+                intake_mg.move_velocity(-200);
+            } else {
+                intake_mg.move_velocity(0);
+            }
 
-        if (driver.get_digital(DIGITAL_R1) || partner.get_digital(DIGITAL_R1)) {
-            lower_conveyor.move_velocity(200);
-            upper_conveyor.move_velocity(200);
-        } else if (driver.get_digital(DIGITAL_R2) || partner.get_digital(DIGITAL_R2)) {
-            lower_conveyor.move_velocity(-200);
-            upper_conveyor.move_velocity(-200);
-        } else {
-            lower_conveyor.move_velocity(0);
-            upper_conveyor.move_velocity(0);
-        }
+            if (driver.get_digital(DIGITAL_R1) || partner.get_digital(DIGITAL_R1)) {
+                lower_conveyor.move_velocity(200);
+                upper_conveyor.move_velocity(200);
+            } else if (driver.get_digital(DIGITAL_R2) || partner.get_digital(DIGITAL_R2)) {
+                lower_conveyor.move_velocity(-200);
+                upper_conveyor.move_velocity(-200);
+            } else {
+                lower_conveyor.move_velocity(0);
+                upper_conveyor.move_velocity(0);
+            }
 
-        if (partner.get_digital(DIGITAL_UP)) {
-            lower_conveyor.move_velocity(200);
-        } else if (partner.get_digital(DIGITAL_DOWN)) {
-            lower_conveyor.move_velocity(-200);
-        } else {
-            lower_conveyor.move_velocity(0);
-        }
+            if (partner.get_digital(DIGITAL_UP)) {
+                lower_conveyor.move_velocity(200);
+            } else if (partner.get_digital(DIGITAL_DOWN)) {
+                lower_conveyor.move_velocity(-200);
+            } else {
+                lower_conveyor.move_velocity(0);
+            }
 
-        if (partner.get_digital(DIGITAL_X)) {
-            upper_conveyor.move_velocity(200);
-        } else if (partner.get_digital(DIGITAL_B)) {
-            upper_conveyor.move_velocity(-200);
-        } else {
-            upper_conveyor.move_velocity(0);
-        }
+            if (partner.get_digital(DIGITAL_X)) {
+                upper_conveyor.move_velocity(200);
+            } else if (partner.get_digital(DIGITAL_B)) {
+                upper_conveyor.move_velocity(-200);
+            } else {
+                upper_conveyor.move_velocity(0);
+            }
 
-        if (driver.get_digital(DIGITAL_A) || partner.get_digital(DIGITAL_A)) {
-            leftLift.set_value(true);
-            rightLift.set_value(true);
-        } 
-        if (driver.get_digital(DIGITAL_Y) || partner.get_digital(DIGITAL_Y)) {
-            leftLift.set_value(false);
-            rightLift.set_value(false);
+            if (driver.get_digital(DIGITAL_A) || partner.get_digital(DIGITAL_A)) {
+                leftLift.set_value(false);
+                rightLift.set_value(false);
+            } 
+            if (driver.get_digital(DIGITAL_B) || partner.get_digital(DIGITAL_B)) {
+                leftLift.set_value(true);
+                rightLift.set_value(true);
+            }
+            
+            pros::delay(10);
         }
-        
-		pros::delay(10);
-	}
+    } else if (ui.getPartnerIndex() == 1) {
+        int blockCount = 0; 
+        bool lastBlock = false;
+
+        while (true) {
+            int left = driver.get_analog(ANALOG_LEFT_Y);
+            int right = driver.get_analog(ANALOG_RIGHT_Y);
+            chassis.tank(left, right);
+
+            if (driver.get_digital(DIGITAL_L1) || driver.get_digital(DIGITAL_L2)) {
+                intake_mg.move_velocity(-200);
+
+                double torque = intake_mg.get_torque();
+                if (torque >= TORQUE_THRESHOLD && !lastBlock) {
+                    lastBlock = true;
+                    blockCount++;
+
+                    lower_conveyor.move_relative(720, 200); // move lower conveyor
+
+                    // Upper conveyor moves after 4–5 cubes
+                    if (blockCount > 4) {
+                        upper_conveyor.move_relative(560, 200);
+                    }
+
+                    if (blockCount > 6) {
+                        driver.rumble("---");
+                    }
+                } 
+                else if (torque < TORQUE_THRESHOLD) {
+                    lastBlock = false;
+                }
+            } 
+            else {
+                intake_mg.move_velocity(0);
+            }
+
+            if (driver.get_digital(DIGITAL_R1)) {
+                lower_conveyor.move_velocity(200);
+                upper_conveyor.move_velocity(200);
+                blockCount = 0;
+            }
+
+            else if (driver.get_digital(DIGITAL_R2)) {
+                lower_conveyor.move_velocity(-200);
+                intake_mg.move_velocity(200);
+                blockCount = 0;
+            }
+
+            // Stop conveyors if idle
+            else if (!(driver.get_digital(DIGITAL_L1) || driver.get_digital(DIGITAL_L2))) {
+                lower_conveyor.move_velocity(0);
+                upper_conveyor.move_velocity(0);
+            }
+
+            if (driver.get_digital(DIGITAL_A)) { // extend
+                leftLift.set_value(false);
+                rightLift.set_value(false);
+            }
+            if (driver.get_digital(DIGITAL_B)) { // retract
+                leftLift.set_value(true);
+                rightLift.set_value(true);
+            }
+
+            pros::delay(10);
+        }
+    }
 }
