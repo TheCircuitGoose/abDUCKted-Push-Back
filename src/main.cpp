@@ -17,7 +17,7 @@
 pros::Controller driver(pros::E_CONTROLLER_MASTER);				// Creates primary controller
 pros::Controller partner(pros::E_CONTROLLER_PARTNER);           // Creates secondary controller
 
-pros::Motor left1(-1, pros::MotorGearset::blue);
+pros::Motor left1(-1, pros::MotorGearset::blue);                // individual motors for logging
 pros::Motor left2(-2, pros::MotorGearset::blue);
 pros::Motor left3(3, pros::MotorGearset::blue);
 pros::Motor right1(4, pros::MotorGearset::blue);
@@ -28,17 +28,17 @@ pros::MotorGroup left_mg({-1, -2, 3}, pros::MotorGearset::blue);	// Creates left
 pros::MotorGroup right_mg({4, 7, -8}, pros::MotorGearset::blue);	// Creates right drive motor group with ports 4, 7, and 8
 
 pros::MotorGroup intake_mg({10, -14});	                            // Creates intake motor group with ports 10 and 14
-pros::Motor lower_conveyor(-15);                                     // Creates lower conveyor motor on port 15
-pros::Motor upper_conveyor(-16);                                     // Creates upper conveyor motor on port 16
+pros::Motor lower_conveyor(-15);                                    // Creates lower conveyor motor on port 15
+pros::Motor upper_conveyor(-16);                                    // Creates upper conveyor motor on port 16
 
 pros::ADIDigitalOut leftLift('A');
 pros::ADIDigitalOut rightLift('B');
 
 pros::Imu inertial(11);												// Creates inertial sensor on port 11
 pros::Rotation hTrack(12);											// Creates horizontal tracking wheel on port 11
-pros::Rotation vTrack(-17);                                          // Creates vertical tracking wheel on port 17
+pros::Rotation vTrack(-17);                                         // Creates vertical tracking wheel on port 17
 
-pros::Optical intake_color(18);                                   // Creates optical sensor on port 18
+pros::Optical intake_color(18);                                     // Creates optical sensor on port 18
 
 // LemLib Declarations
 // Drivetrain Configuration
@@ -133,28 +133,22 @@ void logTask() {
 }
 
 // UI Declarations
-int autonIndex = 0;													// Declares an int for storing the selected auton routine.
-int colorIndex = 0;													// Declares an int for storing the selected color.
+int autonIndex = 0;	// Declares an int for storing the selected auton routine.
+int colorIndex = 0; // Declares an int for storing the selected color.
 UI ui;
 
 // When Start
 void initialize() {
-    lv_init();
+    lv_init(); // init lvgl
+    ui.initUI_NEW(lv_scr_act());
 
     inertial.reset(); // Reset the inertial sensor
     hTrack.reset(); // Reset the horizontal tracking wheel
     vTrack.reset(); // Reset the vertical tracking wheel
     chassis.calibrate(); // Calibrate the chassis sensors
-
-    pros::Task logTaskObj(logTask);
-
-    inertial.reset();
-    hTrack.reset();
-    vTrack.reset();
-    chassis.calibrate();
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
 
-    ui.initUI_NEW(lv_scr_act());
+    pros::Task logTaskObj(logTask); // start logging task
 }
 
 // When Disabled
@@ -165,9 +159,9 @@ void competition_initialize() {}
 
 // When Autonomous
 void autonomous() {
-    autonIndex = ui.getAutonIndex();
+    autonIndex = ui.getAutonIndex(); // get selected ui values
     colorIndex = ui.getColorIndex();
-    switch (autonIndex) {
+    switch (autonIndex) { // pick auton to use
         case 1: // Left
             chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
             chassis.setPose(-50, 18, 0); // set starting position, touching parking zone
@@ -201,12 +195,15 @@ void autonomous() {
             lower_conveyor.move_velocity(0);
             upper_conveyor.move_velocity(0);
             intake_mg.move_velocity(0);
-        case 2: // Right
+        case 2: // Right, same as left but mirrored
             chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
             chassis.setPose(-50, -18, 180);
+            leftLift.set_value(false);
+            rightLift.set_value(false);
             pros::delay(10);
-            chassis.moveToPose(-50, -48, 270, 3000);
-            chassis.moveToPose(-54, -48, 270, 3000, {.maxSpeed = 75});
+            chassis.moveToPoint(-50, -48, 3000);
+            chassis.turnToHeading(270, 1000);
+            chassis.moveToPoint(-59, -48, 3000, {.maxSpeed = 75});
             intake_mg.move_velocity(200);
             lower_conveyor.move_velocity(200);
             if (colorIndex != 0) {
@@ -220,15 +217,17 @@ void autonomous() {
                 intake_mg.move_velocity(0);
                 lower_conveyor.move_velocity(0);
             }
-            chassis.moveToPose(-50, -48, 270, 2000, {.forwards = false});
-            leftLift.set_value(false);
-            rightLift.set_value(false);
-            chassis.moveToPose(-28, -48, 90, 3000);
+            chassis.moveToPose(-44, -48, 270, 2000, {.forwards = false});
+            pros::delay(100);
+            chassis.moveToPose(-26, -48, 90, 3000);
+            pros::delay(2500);
             lower_conveyor.move_velocity(200);
             upper_conveyor.move_velocity(200);
+            intake_mg.move_velocity(-200);
             pros::delay(5000);
             lower_conveyor.move_velocity(0);
             upper_conveyor.move_velocity(0);
+            intake_mg.move_velocity(0);
         case 3: // PID Tuning
             chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
             pros::delay(4750);
@@ -250,7 +249,7 @@ void opcontrol() {
             int right = driver.get_analog(ANALOG_RIGHT_Y); // Gets Right Stick Up/Down Value
             chassis.tank(left, right);
 
-            if (driver.get_digital(DIGITAL_L1) || partner.get_digital(DIGITAL_L1)) {
+            if (driver.get_digital(DIGITAL_L1) || partner.get_digital(DIGITAL_L1)) { // intake
                 intake_mg.move_velocity(200);
             } else if (driver.get_digital(DIGITAL_L2) || partner.get_digital(DIGITAL_L2)) {
                 intake_mg.move_velocity(-200);
@@ -258,7 +257,7 @@ void opcontrol() {
                 intake_mg.move_velocity(0);
             }
 
-            if (driver.get_digital(DIGITAL_R1) || partner.get_digital(DIGITAL_R1)) {
+            if (driver.get_digital(DIGITAL_R1) || partner.get_digital(DIGITAL_R1)) { // conveyor
                 lower_conveyor.move_velocity(200);
                 upper_conveyor.move_velocity(200);
             } else if (driver.get_digital(DIGITAL_R2) || partner.get_digital(DIGITAL_R2)) {
@@ -269,7 +268,7 @@ void opcontrol() {
                 upper_conveyor.move_velocity(0);
             }
 
-            if (partner.get_digital(DIGITAL_UP)) {
+            if (partner.get_digital(DIGITAL_UP)) { // lower conveyor (partner only)
                 lower_conveyor.move_velocity(200);
             } else if (partner.get_digital(DIGITAL_DOWN)) {
                 lower_conveyor.move_velocity(-200);
@@ -277,7 +276,7 @@ void opcontrol() {
                 lower_conveyor.move_velocity(0);
             }
 
-            if (partner.get_digital(DIGITAL_X)) {
+            if (partner.get_digital(DIGITAL_X)) { // upper conveyor (partner only)
                 upper_conveyor.move_velocity(200);
             } else if (partner.get_digital(DIGITAL_B)) {
                 upper_conveyor.move_velocity(-200);
@@ -285,7 +284,7 @@ void opcontrol() {
                 upper_conveyor.move_velocity(0);
             }
 
-            if (driver.get_digital(DIGITAL_A) || partner.get_digital(DIGITAL_A)) {
+            if (driver.get_digital(DIGITAL_A) || partner.get_digital(DIGITAL_A)) { // lift
                 leftLift.set_value(false);
                 rightLift.set_value(false);
             } 
@@ -306,42 +305,41 @@ void opcontrol() {
             chassis.tank(left, right);
 
             if (driver.get_digital(DIGITAL_L1) || driver.get_digital(DIGITAL_L2)) {
-                intake_mg.move_velocity(-200);
+                intake_mg.move_velocity(-200); // intake
 
                 double torque = intake_mg.get_torque();
-                if (torque >= TORQUE_THRESHOLD && !lastBlock) {
+                if (torque >= TORQUE_THRESHOLD && !lastBlock) { // detect if block was intaken
                     lastBlock = true;
                     blockCount++;
 
                     lower_conveyor.move_relative(720, 200); // move lower conveyor
 
-                    // Upper conveyor moves after 4–5 cubes
-                    if (blockCount > 4) {
+                    if (blockCount > 4) { // move upper conveyor once bottom is full
                         upper_conveyor.move_relative(560, 200);
                     }
 
-                    if (blockCount > 6) {
-                        driver.rumble("---");
+                    if (blockCount > 6) { // rumble if full to indicate to driver
+                        driver.rumble("-");
                     }
                 } 
                 else if (torque < TORQUE_THRESHOLD) {
-                    lastBlock = false;
+                    lastBlock = false; // debounce
                 }
             } 
             else {
                 intake_mg.move_velocity(0);
             }
 
-            if (driver.get_digital(DIGITAL_R1)) {
+            if (driver.get_digital(DIGITAL_R1)) { // score
                 lower_conveyor.move_velocity(200);
                 upper_conveyor.move_velocity(200);
-                blockCount = 0;
+                blockCount = 0; // reset count
             }
 
-            else if (driver.get_digital(DIGITAL_R2)) {
+            else if (driver.get_digital(DIGITAL_R2)) { // reverse score
                 lower_conveyor.move_velocity(-200);
                 intake_mg.move_velocity(200);
-                blockCount = 0;
+                blockCount = 0; // reset count
             }
 
             // Stop conveyors if idle
@@ -359,6 +357,42 @@ void opcontrol() {
                 rightLift.set_value(true);
             }
 
+            pros::delay(10);
+        }
+    } else if (partnerIndex == 2) {
+        while (true) {
+            int left = driver.get_analog(ANALOG_LEFT_Y); // Gets Left Stick Up/Down Value
+            int right = driver.get_analog(ANALOG_RIGHT_Y); // Gets Right Stick Up/Down Value
+            chassis.tank(left, right);
+
+            if (driver.get_digital(DIGITAL_L1)) {
+                intake_mg.move_velocity(200);
+            } else if (driver.get_digital(DIGITAL_L2)) {
+                intake_mg.move_velocity(-200);
+            } else {
+                intake_mg.move_velocity(0);
+            }
+
+            if (driver.get_digital(DIGITAL_R1)) {
+                lower_conveyor.move_velocity(200);
+                upper_conveyor.move_velocity(200);
+            } else if (driver.get_digital(DIGITAL_R2)) {
+                lower_conveyor.move_velocity(-200);
+                upper_conveyor.move_velocity(-200);
+            } else {
+                lower_conveyor.move_velocity(0);
+                upper_conveyor.move_velocity(0);
+            }
+
+            if (driver.get_digital(DIGITAL_A)) {
+                leftLift.set_value(false);
+                rightLift.set_value(false);
+            } 
+            if (driver.get_digital(DIGITAL_B)) {
+                leftLift.set_value(true);
+                rightLift.set_value(true);
+            }
+            
             pros::delay(10);
         }
     }

@@ -5,13 +5,26 @@
 
 UI::UI() {};
 
+int UI::getAutonIndex() { // getters for selected values
+    return lv_roller_get_selected(autonRoller); // return the index of roller
+}
+int UI::getColorIndex() {
+    return lv_roller_get_selected(colorRoller);
+}
+int UI::getDriveIndex() {
+    return lv_roller_get_selected(driveRoller);
+}
+int UI::getPartnerIndex() {
+    return lv_roller_get_selected(partnerRoller);
+}
+
 void UI::initUI_NEW(lv_obj_t* parent) {
-    tabview = lv_tabview_create(parent, LV_DIR_TOP, 40);
+    tabview = lv_tabview_create(parent, LV_DIR_TOP, 40); // tabs
     tab_home = lv_tabview_add_tab(tabview, "Home");
     tab_auton = lv_tabview_add_tab(tabview, "Auton");
     tab_teleop = lv_tabview_add_tab(tabview, "Driver");
 
-    autonRoller = lv_roller_create(tab_auton);
+    autonRoller = lv_roller_create(tab_auton); // rollers
     colorRoller = lv_roller_create(tab_auton);
     driveRoller = lv_roller_create(tab_teleop);
     partnerRoller = lv_roller_create(tab_teleop);
@@ -88,7 +101,7 @@ void UI::initUI_NEW(lv_obj_t* parent) {
     // Configure Partner Roller
     lv_roller_set_options(
         partnerRoller,
-        "Partner Controller\nSmart Partner (BETA)",
+        "Dual Controllers\nSmart Partner (BETA)\nSimple Solo",
         LV_ROLLER_MODE_NORMAL
     );
     lv_roller_set_visible_row_count(partnerRoller, 2);
