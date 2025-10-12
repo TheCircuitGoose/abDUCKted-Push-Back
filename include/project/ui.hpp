@@ -15,6 +15,8 @@ class UI {
         int getColorIndex();
         int getDriveIndex();
         int getPartnerIndex();
+
+        void goHome();
     private:
         lv_obj_t* activeScreen;		// Creates activeScreen parent object
 

@@ -1,4 +1,5 @@
 #include "main.h"
+#include "project/auton.hpp"
 
 int get_color(pros::Optical& intake_color) {               // Color sensing wrapper function for auton
     int hue = intake_color.get_hue();
@@ -11,4 +12,21 @@ int get_color(pros::Optical& intake_color) {               // Color sensing wrap
     }
 
     return color;
+}
+
+void wait_for_intake(pros::MotorGroup& intake_mg, int block_quantity, float torque_threshold) {
+    bool lastBlock = false;
+    int blockCount = 0;
+    while (blockCount < 3) {
+        double torque = intake_mg.get_torque();
+        if (torque >= torque_threshold && !lastBlock) { // detect if block was intaken
+            lastBlock = true;
+            blockCount++;
+        } 
+        else if (torque < torque_threshold) {
+            lastBlock = false; // debounce
+        }
+        pros::delay(10);
+    }
+    return;
 }

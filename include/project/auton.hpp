@@ -9,7 +9,9 @@ namespace auton {                                          // Creates "auton" na
 
 namespace color {
     const std::string colorNames =                         // List of colors to be selected for display
-        "Disable Color Sensing\nRed Alliance\nBlue Alliance";
+        "Simple Timer\nColor Sensing (Red)\nColor Sensing (Blue)\nTorque Sensing";
 }
 
 int get_color(pros::Optical& intake_color);
+
+void wait_for_intake(pros::MotorGroup& intake_mg, int block_quantity, float torque_threshold);

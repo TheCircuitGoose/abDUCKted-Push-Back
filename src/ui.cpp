@@ -188,3 +188,7 @@ void UI::color_roller_event_handler(lv_event_t* e) { // change color of color se
         };
     };
 };
+
+void UI::goHome() { // go to home tab
+    lv_tabview_set_act(tabview, 0, LV_ANIM_OFF);
+}
