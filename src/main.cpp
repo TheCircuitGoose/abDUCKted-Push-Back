@@ -11,6 +11,7 @@
 #include "project/ui.hpp"
 
 #define TORQUE_THRESHOLD 0.15
+#define TESTING 0 // Encode UI Values for repeated testing, 0 for disable.
 
 // Device Declarations
 // Ports 5, 6, 9, and 13 are Dead =(
@@ -84,14 +85,14 @@ lemlib::ControllerSettings lateral_controller(5.5, // proportional gain (kP)
 );
 
 //Angular PID Controller Configuration
-lemlib::ControllerSettings angular_controller(2, // proportional gain (kP)
+lemlib::ControllerSettings angular_controller(1.5, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              10, // derivative gain (kD)
-                                              3, // anti windup
-                                              1, // small error range, in degrees
-                                              100, // small error range timeout, in milliseconds
-                                              3, // large error range, in degrees
-                                              500, // large error range timeout, in milliseconds
+                                              8, // derivative gain (kD)
+                                              0, // anti windup
+                                              0, // small error range, in degrees
+                                              0, // small error range timeout, in milliseconds
+                                              0, // large error range, in degrees
+                                              0, // large error range timeout, in milliseconds
                                               0 // maximum acceleration (slew)
 );
 
@@ -161,6 +162,10 @@ void competition_initialize() {}
 void autonomous() {
     autonIndex = ui.getAutonIndex(); // get selected ui values
     colorIndex = ui.getColorIndex();
+    if ((TESTING / 100) == 1) { // if testing left auton
+        autonIndex = (TESTING / 10) % 10;
+        colorIndex = TESTING % 10;
+    }
     ui.goHome();
     switch (autonIndex) { // pick auton to use
         case 1: // Left
@@ -169,9 +174,9 @@ void autonomous() {
             leftLift.set_value(false);
             rightLift.set_value(false);
             pros::delay(10);
-            chassis.moveToPoint(-50, 48, 2500); // drive to match loader
+            chassis.moveToPoint(-50, 48, 2000); // drive to match loader
             chassis.turnToHeading(270, 750);
-            chassis.moveToPoint(-59, 48, 2500, {.maxSpeed = 75});
+            chassis.moveToPoint(-59, 48, 1750, {.maxSpeed = 75});
             intake_mg.move_velocity(-200); //unload
             lower_conveyor.move_velocity(200);
             if (colorIndex == 1 || colorIndex == 2) { // if using color sensing
@@ -192,21 +197,23 @@ void autonomous() {
             upper_conveyor.move_velocity(0);
             intake_mg.move_velocity(0);
             pros::delay(50);
-            chassis.turnToHeading(90, 750);
+            chassis.turnToHeading(90, 1250, {.maxSpeed = 125});
             pros::delay(50);
-            chassis.moveToPoint(-26, 48, 2500);
-            pros::delay(2000);
-            chassis.cancelAllMotions();
+            chassis.moveToPoint(-26, 48, 2500, {.maxSpeed = 125});
+            pros::delay(1000);
             lower_conveyor.move_velocity(200); // score
             upper_conveyor.move_velocity(200);
             intake_mg.move_velocity(-200);
-            pros::delay(3000);
+            pros::delay(2950);
+            chassis.setPose(-32, 48, 90); // Reset position to avoid drift (Instead of using Ki)
             lower_conveyor.move_velocity(0);
             upper_conveyor.move_velocity(0);
             intake_mg.move_velocity(0);
-            //chassis.moveToPoint(-44, 48, 2000, {.forwards = false});
-            //chassis.turnToHeading(135, 750);
-            //chassis.moveToPoint(-32, 36, 1750);
+            pros::delay(50);
+            chassis.moveToPoint(-48, 48, 2000, {.forwards = false});
+            chassis.turnToHeading(135, 750);
+            intake_mg.move_velocity(-200);
+            chassis.moveToPoint(-36, 36, 1750);
             //chassis.moveToPoint(-22, 26, 3000, {.maxSpeed = 75});
             break;
         case 2: // Right, same as left but mirrored
@@ -241,15 +248,20 @@ void autonomous() {
             chassis.turnToHeading(90, 750);
             pros::delay(50);
             chassis.moveToPose(-26, -48, 90, 3000);
-            pros::delay(2000);
-            chassis.cancelAllMotions();
+            pros::delay(1000);
             lower_conveyor.move_velocity(200);
             upper_conveyor.move_velocity(200);
             intake_mg.move_velocity(-200);
-            pros::delay(3000);
+            pros::delay(2950);
+            chassis.setPose(-32, -48, 90);
             lower_conveyor.move_velocity(0);
             upper_conveyor.move_velocity(0);
             intake_mg.move_velocity(0);
+            pros::delay(50);
+            chassis.moveToPoint(-48, -48, 2000, {.forwards = false});
+            chassis.turnToHeading(225, 750);
+            intake_mg.move_velocity(-200);
+            chassis.moveToPoint(-36, -36, 1750);
             break;
         case 3: // PID Tuning
             chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
@@ -410,7 +422,7 @@ void opcontrol() {
                 upper_conveyor.move_velocity(0);
             }
 
-            if (driver.get_digital(DIGITAL_A)) {
+            if (driver.get_digital(DIGITAL_Y)) {
                 leftLift.set_value(false);
                 rightLift.set_value(false);
             } 
