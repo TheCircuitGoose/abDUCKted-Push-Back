@@ -4,7 +4,7 @@
 
 namespace auton {                                          // Creates "auton" namespace
     const std::string autonNames =                         // List of autons to be selected for display
-        "Disabled\nLeft\nRight\nPID Tuning";                           
+        "Disabled\nLeft\nRight\nSkills\nPID Tuning";                           
 }
 
 namespace color {
@@ -14,4 +14,6 @@ namespace color {
 
 int get_color(pros::Optical& intake_color);
 
-void wait_for_intake(pros::MotorGroup& intake_mg, int block_quantity, float torque_threshold);
+void wait_for_intake_torque(pros::MotorGroup& intake_mg, int block_quantity, float torque_threshold);
+
+void wait_for_intake_color(pros::MotorGroup& intake_mg, pros::Optical& intake_color, int color_index);

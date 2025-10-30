@@ -14,7 +14,7 @@ int get_color(pros::Optical& intake_color) {               // Color sensing wrap
     return color;
 }
 
-void wait_for_intake(pros::MotorGroup& intake_mg, int block_quantity, float torque_threshold) {
+void wait_for_intake_torque(pros::MotorGroup& intake_mg, int block_quantity, float torque_threshold) {
     bool lastBlock = false;
     int blockCount = 0;
     while (blockCount < 3) {
@@ -28,5 +28,15 @@ void wait_for_intake(pros::MotorGroup& intake_mg, int block_quantity, float torq
         }
         pros::delay(10);
     }
+    return;
+}
+
+void wait_for_intake_color(pros::MotorGroup& intake_mg, pros::Optical& intake_color, int color_index) {
+    while (get_color(intake_color) != color_index) { // wait until other color shows if using color sensing
+        pros::delay(10);
+    }
+    intake_mg.move_velocity(200);
+    pros::delay(500);
+    intake_mg.move_velocity(0);
     return;
 }

@@ -29,6 +29,13 @@ void UI::initUI_NEW(lv_obj_t* parent) {
     driveRoller = lv_roller_create(tab_teleop);
     partnerRoller = lv_roller_create(tab_teleop);
 
+    // HOME TAb
+    lv_obj_set_size(tab_home, 480, 220);
+    lv_obj_center(tab_home);
+
+    battery_label = lv_label_create(tab_home);
+//    lv_label_set_text(battery_label, pros::battery::get_capacity());
+
     // AUTON TAB
     lv_obj_set_size(tab_auton, 480, 220);
     lv_obj_center(tab_auton);

@@ -11,7 +11,7 @@
 #include "project/ui.hpp"
 
 #define TORQUE_THRESHOLD 0.15
-#define TESTING 0 // Encode UI Values for repeated testing, 0 for disable.
+#define TESTING 120 // Encode UI Values for repeated testing, 0 for disable.
 
 // Device Declarations
 // Ports 5, 6, 9, and 13 are Dead =(
@@ -180,13 +180,10 @@ void autonomous() {
             intake_mg.move_velocity(-200); //unload
             lower_conveyor.move_velocity(200);
             if (colorIndex == 1 || colorIndex == 2) { // if using color sensing
-                while (get_color(intake_color) != colorIndex) { // wait until other color shows if using color sensing
-                    pros::delay(10);
-                }
-                intake_mg.move_velocity(0);
+                wait_for_intake_color(intake_mg, intake_color, colorIndex);
                 lower_conveyor.move_velocity(0);
             } else if (colorIndex == 3) { // if using torque sensing
-                wait_for_intake(intake_mg, 3, TORQUE_THRESHOLD); // wait for 3 blocks to be picked up
+                wait_for_intake_torque(intake_mg, 3, TORQUE_THRESHOLD); // wait for 3 blocks to be picked up
             } else {
                 pros::delay(2000); // wait 2 second if not using sensing
                 intake_mg.move_velocity(0);
@@ -204,7 +201,7 @@ void autonomous() {
             lower_conveyor.move_velocity(200); // score
             upper_conveyor.move_velocity(200);
             intake_mg.move_velocity(-200);
-            pros::delay(2950);
+/*            pros::delay(2950);
             chassis.setPose(-32, 48, 90); // Reset position to avoid drift (Instead of using Ki)
             lower_conveyor.move_velocity(0);
             upper_conveyor.move_velocity(0);
@@ -215,7 +212,7 @@ void autonomous() {
             intake_mg.move_velocity(-200);
             chassis.moveToPoint(-36, 36, 1750);
             //chassis.moveToPoint(-22, 26, 3000, {.maxSpeed = 75});
-            break;
+*/            break;
         case 2: // Right, same as left but mirrored
             chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
             chassis.setPose(-50, -18, 180);
@@ -228,13 +225,10 @@ void autonomous() {
             intake_mg.move_velocity(-200);
             lower_conveyor.move_velocity(200);
             if (colorIndex == 1 || colorIndex == 2) { // if using color sensing
-                while (get_color(intake_color) != colorIndex) { // wait until other color shows if using color sensing
-                    pros::delay(10);
-                }
-                intake_mg.move_velocity(0);
+                wait_for_intake_color(intake_mg, intake_color, colorIndex);
                 lower_conveyor.move_velocity(0);
             } else if (colorIndex == 3) { // if using torque sensing
-                wait_for_intake(intake_mg, 3, TORQUE_THRESHOLD); // wait for 3 blocks to be picked up
+                wait_for_intake_torque(intake_mg, 3, TORQUE_THRESHOLD); // wait for 3 blocks to be picked up
             } else {
                 pros::delay(2000); // wait 2 second if not using sensing
                 intake_mg.move_velocity(0);
@@ -252,7 +246,7 @@ void autonomous() {
             lower_conveyor.move_velocity(200);
             upper_conveyor.move_velocity(200);
             intake_mg.move_velocity(-200);
-            pros::delay(2950);
+/*            pros::delay(2950);
             chassis.setPose(-32, -48, 90);
             lower_conveyor.move_velocity(0);
             upper_conveyor.move_velocity(0);
@@ -262,8 +256,10 @@ void autonomous() {
             chassis.turnToHeading(225, 750);
             intake_mg.move_velocity(-200);
             chassis.moveToPoint(-36, -36, 1750);
-            break;
-        case 3: // PID Tuning
+*/            break;
+        case 3: // Skills
+            
+        case 4: // PID Tuning
             chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
             pros::delay(4750);
             chassis.setPose(0, 0, 0);
