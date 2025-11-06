@@ -3,7 +3,6 @@
 
 #include <thread>
 #include <string>
-#include <chrono>
 
 #include "liblvgl/lvgl.h"
 #include "lemlib/api.hpp"
@@ -12,23 +11,7 @@
 #include "project/ui.hpp"
 
 #define TORQUE_THRESHOLD 0.15
-#define TESTING 120 // Encode UI Values for repeated testing, 0 for disable.
-
-class Timer {
-    public:
-        void start() {
-            startTime = std::chrono::high_resolution_clock::now();
-        }
-        void stop() {
-            endTime = std::chrono::high_resolution_clock::now();
-        }
-        float getTime() {
-            return std::chrono::duration_cast<std::chrono::seconds>(endTime - startTime).count();
-        }
-    private:
-        std::chrono::high_resolution_clock::time_point startTime;
-        std::chrono::high_resolution_clock::time_point endTime;
-};
+#define TESTING 000 // Encode UI Values for repeated testing, 0 for disable.
 
 // Device Declarations
 // Ports 5, 6, 9, and 13 are Dead =(
@@ -280,8 +263,6 @@ void autonomous() {
         }
         case 3: // Skills
         {
-            Timer timer;
-            timer.start();
             chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
             chassis.setPose(-50, 18, 0); // set starting position, touching parking zone
             leftLift.set_value(false);
@@ -300,20 +281,20 @@ void autonomous() {
             pros::delay(50);
             chassis.turnToHeading(135, 1250, {.maxSpeed = 125});
             pros::delay(50);
-            chassis.moveToPoint(-15, 15, 3000, {.maxSpeed = 125});
+            chassis.moveToPoint(-12, 12, 3000, {.maxSpeed = 125});
             leftLift.set_value(true);
             rightLift.set_value(true);
             pros::delay(1000);
             lower_conveyor.move_velocity(200); // score
             upper_conveyor.move_velocity(200);
             intake_mg.move_velocity(-200); 
-            while (timer.getTime() < 25000) pros::delay(10);
+            pros::delay(3000);
             lower_conveyor.move_velocity(0);
             upper_conveyor.move_velocity(0);
             intake_mg.move_velocity(0);
-            chassis.moveToPoint(-36, 36, 2000, {.forwards = false}); // go to other loader
-            chassis.turnToHeading(180, 2000);
-            chassis.moveToPoint(-36, -48, 4000);
+            chassis.moveToPoint(-42, 36, 2000, {.forwards = false}); // go to other loader
+            chassis.turnToHeading(180, 2000, {.maxSpeed = 125});
+            chassis.moveToPoint(-42, -48, 4000, {.maxSpeed = 150});
             leftLift.set_value(false);
             rightLift.set_value(false);
 
@@ -327,20 +308,20 @@ void autonomous() {
             upper_conveyor.move_velocity(0);
             intake_mg.move_velocity(0);
             pros::delay(50);
-            chassis.turnToHeading(135, 750, {.maxSpeed = 125});
+            chassis.turnToHeading(45, 750, {.maxSpeed = 125});
             pros::delay(50);
-            chassis.moveToPoint(-15, -15, 3000, {.maxSpeed = 125});
+            chassis.moveToPoint(-12, -12, 3000, {.maxSpeed = 125});
             pros::delay(1000);
             lower_conveyor.move_velocity(-200);
             intake_mg.move_velocity(200);
-            while (timer.getTime() < 50000) pros::delay(10);
+            pros::delay(3000);
             lower_conveyor.move_velocity(0);
             intake_mg.move_velocity(0);
             chassis.moveToPoint(-36, -36, 2000, {.forwards = false});
             chassis.turnToHeading(0, 2000);
-            chassis.moveToPoint(-36, 0, 3500);
-            chassis.turnToHeading(270, 2000);
-            chassis.moveToPoint(-80, 0, 10000);
+            chassis.moveToPoint(-18, 0, 3500, {.maxSpeed = 70});
+            chassis.turnToHeading(90, 2000);
+            chassis.moveToPoint(-80, 0, 10000, {.forwards = false});
             break;
         }
         case 4: // PID Tuning
