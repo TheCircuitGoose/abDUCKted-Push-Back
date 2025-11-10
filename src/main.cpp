@@ -324,7 +324,116 @@ void autonomous() {
             chassis.moveToPoint(-80, 0, 10000, {.forwards = false});
             break;
         }
-        case 4: // PID Tuning
+        case 4: // Short Skills
+        {
+            chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
+            chassis.setPose(-50, 18, 0); // set starting position, touching parking zone
+            leftLift.set_value(false);
+            rightLift.set_value(false);
+            pros::delay(10);
+            chassis.moveToPoint(-50, 48, 2000); // drive to match loader
+            chassis.turnToHeading(270, 750);
+            chassis.moveToPoint(-59, 48, 1750, {.maxSpeed = 75});
+            intake_mg.move_velocity(-200); //unload
+            lower_conveyor.move_velocity(200);
+            pros::delay(7500);
+            intake_mg.move_velocity(0);
+            lower_conveyor.move_velocity(0);
+            chassis.moveToPoint(-44, 48, 2000, {.forwards = false}); // go to long goal
+            lower_conveyor.move_velocity(0);
+            upper_conveyor.move_velocity(0);
+            intake_mg.move_velocity(0);
+            pros::delay(50);
+            chassis.turnToHeading(90, 1250, {.maxSpeed = 125});
+            pros::delay(50);
+            chassis.moveToPoint(-26, 48, 2500, {.maxSpeed = 125});
+            pros::delay(1000);
+            lower_conveyor.move_velocity(200); // score
+            upper_conveyor.move_velocity(200);
+            intake_mg.move_velocity(-200);
+            pros::delay(12500);
+            lower_conveyor.move_velocity(0);
+            upper_conveyor.move_velocity(0);
+            intake_mg.move_velocity(0);
+            chassis.moveToPoint(-36, 36, 2000, {.forwards = false});
+            chassis.turnToHeading(0, 2000);
+            chassis.moveToPoint(-18, 0, 3500, {.maxSpeed = 70});
+            chassis.turnToHeading(90, 2000);
+            chassis.moveToPoint(-80, 0, 10000, {.forwards = false});
+        }
+        case 5: // Long Skills
+        {
+            chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
+            chassis.setPose(-50, 18, 0); // set starting position, touching parking zone
+            leftLift.set_value(false);
+            rightLift.set_value(false);
+            pros::delay(10);
+            chassis.moveToPoint(-50, 48, 2000); // drive to match loader
+            chassis.turnToHeading(270, 750);
+            chassis.moveToPoint(-59, 48, 1750, {.maxSpeed = 75});
+            intake_mg.move_velocity(-200); //unload
+            lower_conveyor.move_velocity(200);
+            pros::delay(5000);
+            intake_mg.move_velocity(0);
+            lower_conveyor.move_velocity(0);
+            chassis.moveToPoint(-44, 48, 2000, {.forwards = false}); // go to long goal
+            lower_conveyor.move_velocity(0);
+            upper_conveyor.move_velocity(0);
+            intake_mg.move_velocity(0);
+            pros::delay(50);
+            chassis.turnToHeading(90, 1250, {.maxSpeed = 125});
+            pros::delay(50);
+            chassis.moveToPoint(-26, 48, 2500, {.maxSpeed = 125});
+            pros::delay(1000);
+            lower_conveyor.move_velocity(200); // score
+            upper_conveyor.move_velocity(200);
+            intake_mg.move_velocity(-200);
+            pros::delay(10000);
+            lower_conveyor.move_velocity(0);
+            upper_conveyor.move_velocity(0);
+            intake_mg.move_velocity(0);
+
+            chassis.moveToPoint(-36, 48, 2000, {.forwards = false});
+            chassis.turnToHeading(180, 1000);
+            chassis.moveToPoint(-36, -48, 3000, {.maxSpeed = 125});
+            chassis.turnToHeading(270, 1000);
+
+            pros::delay(50);
+
+            chassis.moveToPoint(-50, -48, 3000);
+            chassis.turnToHeading(270, 1000);
+            chassis.moveToPoint(-59, -48, 3000, {.maxSpeed = 75});
+            intake_mg.move_velocity(-200);
+            lower_conveyor.move_velocity(200);
+            pros::delay(5000); 
+            intake_mg.move_velocity(0);
+            lower_conveyor.move_velocity(0);
+            chassis.moveToPoint(-44, -48, 2000, {.forwards = false});
+            lower_conveyor.move_velocity(0);
+            upper_conveyor.move_velocity(0);
+            intake_mg.move_velocity(0);
+            pros::delay(50);
+            chassis.turnToHeading(90, 750, {.maxSpeed = 125});
+            pros::delay(50);
+            chassis.moveToPose(-26, -48, 90, 3000, {.maxSpeed = 125});
+            pros::delay(1000);
+            lower_conveyor.move_velocity(200);
+            upper_conveyor.move_velocity(200);
+            intake_mg.move_velocity(-200);
+
+            pros::delay(10000);
+            lower_conveyor.move_velocity(0);
+            upper_conveyor.move_velocity(0);
+            intake_mg.move_velocity(0);
+
+
+            chassis.moveToPoint(-36, -36, 2000, {.forwards = false});
+            chassis.turnToHeading(0, 2000);
+            chassis.moveToPoint(-18, 0, 3500, {.maxSpeed = 70});
+            chassis.turnToHeading(90, 2000);
+            chassis.moveToPoint(-80, 0, 10000, {.forwards = false});
+        }
+        case 6: // PID Tuning
         {
             chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
             pros::delay(4750);
