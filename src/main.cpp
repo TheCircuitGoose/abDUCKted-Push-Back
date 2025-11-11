@@ -11,7 +11,7 @@
 #include "project/ui.hpp"
 
 #define TORQUE_THRESHOLD 0.15
-#define TESTING 000 // Encode UI Values for repeated testing, 0 for disable.
+#define TESTING 110 // Encode UI Values for repeated testing, 0 for disable.
 
 // Device Declarations
 // Ports 5, 6, 9, and 13 are Dead =(
@@ -73,9 +73,9 @@ lemlib::OdomSensors sensors(&verticalTrack, // vertical tracking wheel 1, set to
 
 // Work in Progess
 // Lateral PID Controller Configuration
-lemlib::ControllerSettings lateral_controller(5.5, // proportional gain (kP)
+lemlib::ControllerSettings lateral_controller(5.8, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              0, // derivative gain (kD)
+                                              10, // derivative gain (kD)
                                               0, // anti windup
                                               0, // small error range, in inches
                                               0, // small error range timeout, in milliseconds
@@ -87,7 +87,7 @@ lemlib::ControllerSettings lateral_controller(5.5, // proportional gain (kP)
 //Angular PID Controller Configuration
 lemlib::ControllerSettings angular_controller(1.5, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              8, // derivative gain (kD)
+                                              7.2, // derivative gain (kD)
                                               0, // anti windup
                                               0, // small error range, in degrees
                                               0, // small error range timeout, in milliseconds
@@ -355,11 +355,12 @@ void autonomous() {
             lower_conveyor.move_velocity(0);
             upper_conveyor.move_velocity(0);
             intake_mg.move_velocity(0);
-            chassis.moveToPoint(-36, 36, 2000, {.forwards = false});
+            chassis.moveToPoint(-36, 48, 2000, {.forwards = false});
             chassis.turnToHeading(0, 2000);
             chassis.moveToPoint(-18, 0, 3500, {.maxSpeed = 70});
             chassis.turnToHeading(90, 2000);
             chassis.moveToPoint(-80, 0, 10000, {.forwards = false});
+            break;
         }
         case 5: // Long Skills
         {
@@ -432,8 +433,20 @@ void autonomous() {
             chassis.moveToPoint(-18, 0, 3500, {.maxSpeed = 70});
             chassis.turnToHeading(90, 2000);
             chassis.moveToPoint(-80, 0, 10000, {.forwards = false});
+            break;
         }
-        case 6: // PID Tuning
+        case 6: // Just Park
+        {
+            chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
+            chassis.setPose(-48, 0, 90); // set starting position, touching
+            pros::delay(50);
+            chassis.moveToPoint(-20, 16, 2000);
+            chassis.turnToHeading(82.5, 1000);
+            pros::delay(2000);
+            chassis.moveToPoint(-80, 0, 7500, {.forwards = false});
+            break;
+        }
+        case 7: // Lat PID Tuning
         {
             chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
             pros::delay(4750);
@@ -442,6 +455,17 @@ void autonomous() {
             pros::delay(250);
             targetDistance = 72;
             chassis.moveToPose(0, 72, 0, 10000);
+            break;
+        }
+        case 8: // Ang PID Tuning
+        {
+            chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
+            pros::delay(4750);
+            chassis.setPose(0, 0, 0);
+            isLogging = true; // Start logging data
+            pros::delay(250);
+            targetDistance = 90;
+            chassis.turnToHeading(90, 10000);
             break;
         }
         default:
@@ -469,21 +493,10 @@ void opcontrol() {
                 intake_mg.move_velocity(0);
             }
 
-            if (driver.get_digital(DIGITAL_R1) || partner.get_digital(DIGITAL_R1)) { // conveyor
-                lower_conveyor.move_velocity(200);
-                upper_conveyor.move_velocity(200);
-            } else if (driver.get_digital(DIGITAL_R2) || partner.get_digital(DIGITAL_R2)) {
-                lower_conveyor.move_velocity(-200);
-                upper_conveyor.move_velocity(-200);
-            } else {
-                lower_conveyor.move_velocity(0);
-                upper_conveyor.move_velocity(0);
-            }
-
             if (partner.get_digital(DIGITAL_UP)) { // lower conveyor (partner only)
-                lower_conveyor.move_velocity(-200);
+                lower_conveyor.move_velocity(-165);
             } else if (partner.get_digital(DIGITAL_DOWN)) {
-                lower_conveyor.move_velocity(200);
+                lower_conveyor.move_velocity(165);
             } else {
                 lower_conveyor.move_velocity(0);
             }
@@ -569,42 +582,6 @@ void opcontrol() {
                 rightLift.set_value(true);
             }
 
-            pros::delay(10);
-        }
-    } else if (partnerIndex == 2) {
-        while (true) {
-            int left = driver.get_analog(ANALOG_LEFT_Y); // Gets Left Stick Up/Down Value
-            int right = driver.get_analog(ANALOG_RIGHT_Y); // Gets Right Stick Up/Down Value
-            chassis.tank(left, right);
-
-            if (driver.get_digital(DIGITAL_L1)) {
-                intake_mg.move_velocity(200);
-            } else if (driver.get_digital(DIGITAL_L2)) {
-                intake_mg.move_velocity(-200);
-            } else {
-                intake_mg.move_velocity(0);
-            }
-
-            if (driver.get_digital(DIGITAL_R1)) {
-                lower_conveyor.move_velocity(200);
-                upper_conveyor.move_velocity(200);
-            } else if (driver.get_digital(DIGITAL_R2)) {
-                lower_conveyor.move_velocity(-200);
-                upper_conveyor.move_velocity(-200);
-            } else {
-                lower_conveyor.move_velocity(0);
-                upper_conveyor.move_velocity(0);
-            }
-
-            if (driver.get_digital(DIGITAL_Y)) {
-                leftLift.set_value(false);
-                rightLift.set_value(false);
-            } 
-            if (driver.get_digital(DIGITAL_B)) {
-                leftLift.set_value(true);
-                rightLift.set_value(true);
-            }
-            
             pros::delay(10);
         }
     }
