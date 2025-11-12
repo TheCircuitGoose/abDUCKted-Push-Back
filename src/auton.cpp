@@ -1,5 +1,24 @@
 #include "main.h"
 #include "project/auton.hpp"
+#include <chrono>
+
+using namespace std;
+
+class Timer {
+    public:
+        void start() {
+            startTime = chrono::high_resolution_clock::now();
+        }
+        void stop() {
+            endTime = chrono::high_resolution_clock::now();
+        }
+        long getTime() {
+            return chrono::duration_cast<chrono::milliseconds>(endTime - startTime).count();
+        }
+    private:
+        chrono::high_resolution_clock::time_point startTime;
+        chrono::high_resolution_clock::time_point endTime;
+};
 
 int get_color(pros::Optical& intake_color) {               // Color sensing wrapper function for auton
     int hue = intake_color.get_hue();
@@ -14,10 +33,14 @@ int get_color(pros::Optical& intake_color) {               // Color sensing wrap
     return color;
 }
 
-void wait_for_intake_torque(pros::MotorGroup& intake_mg, int block_quantity, float torque_threshold) {
+void wait_for_intake_torque(pros::MotorGroup& intake_mg, int block_quantity, float torque_threshold, int timeout) {
     bool lastBlock = false;
     int blockCount = 0;
-    while (blockCount < 3) {
+    Timer timer;
+    timer.start();
+    timer.stop();
+    
+    while ((blockCount < block_quantity) && (timer.getTime() < timeout)) {
         double torque = intake_mg.get_torque();
         if (torque >= torque_threshold && !lastBlock) { // detect if block was intaken
             lastBlock = true;
@@ -27,6 +50,7 @@ void wait_for_intake_torque(pros::MotorGroup& intake_mg, int block_quantity, flo
             lastBlock = false; // debounce
         }
         pros::delay(10);
+        timer.stop();
     }
     return;
 }

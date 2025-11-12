@@ -11,7 +11,7 @@
 #include "project/ui.hpp"
 
 #define TORQUE_THRESHOLD 0.15
-#define TESTING 110 // Encode UI Values for repeated testing, 0 for disable.
+#define TESTING 113 // Encode UI Values for repeated testing, 0 for disable.
 
 // Device Declarations
 // Ports 5, 6, 9, and 13 are Dead =(
@@ -184,7 +184,7 @@ void autonomous() {
                 wait_for_intake_color(intake_mg, intake_color, colorIndex);
                 lower_conveyor.move_velocity(0);
             } else if (colorIndex == 3) { // if using torque sensing
-                wait_for_intake_torque(intake_mg, 3, TORQUE_THRESHOLD); // wait for 3 blocks to be picked up
+                wait_for_intake_torque(intake_mg, 3, TORQUE_THRESHOLD, 2500); // wait for 3 blocks to be picked up
             } else {
                 pros::delay(2000); // wait 2 second if not using sensing
                 intake_mg.move_velocity(0);
@@ -197,7 +197,7 @@ void autonomous() {
             pros::delay(50);
             chassis.turnToHeading(90, 1250, {.maxSpeed = 125});
             pros::delay(50);
-            chassis.moveToPoint(-26, 48, 2500, {.maxSpeed = 125});
+            chassis.moveToPoint(-25, 48, 2500, {.maxSpeed = 125});
             pros::delay(1000);
             lower_conveyor.move_velocity(200); // score
             upper_conveyor.move_velocity(200);
@@ -231,7 +231,7 @@ void autonomous() {
                 wait_for_intake_color(intake_mg, intake_color, colorIndex);
                 lower_conveyor.move_velocity(0);
             } else if (colorIndex == 3) { // if using torque sensing
-                wait_for_intake_torque(intake_mg, 3, TORQUE_THRESHOLD); // wait for 3 blocks to be picked up
+                wait_for_intake_torque(intake_mg, 3, TORQUE_THRESHOLD, 2500); // wait for 3 blocks to be picked up
             } else {
                 pros::delay(2000); // wait 2 second if not using sensing
                 intake_mg.move_velocity(0);
@@ -242,9 +242,9 @@ void autonomous() {
             upper_conveyor.move_velocity(0);
             intake_mg.move_velocity(0);
             pros::delay(50);
-            chassis.turnToHeading(90, 750, {.maxSpeed = 125});
+            chassis.turnToHeading(90, 1250, {.maxSpeed = 125});
             pros::delay(50);
-            chassis.moveToPose(-26, -48, 90, 3000, {.maxSpeed = 125});
+            chassis.moveToPoint(-25, -48, 2500, {.maxSpeed = 125});
             pros::delay(1000);
             lower_conveyor.move_velocity(200);
             upper_conveyor.move_velocity(200);
