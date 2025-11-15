@@ -11,7 +11,7 @@
 #include "project/ui.hpp"
 
 #define TORQUE_THRESHOLD 0.15
-#define TESTING 113 // Encode UI Values for repeated testing, 0 for disable.
+#define TESTING 000 // Encode UI Values for repeated testing, 0 for disable.
 
 // Device Declarations
 // Ports 5, 6, 9, and 13 are Dead =(
@@ -148,6 +148,9 @@ void initialize() {
     vTrack.reset(); // Reset the vertical tracking wheel
     chassis.calibrate(); // Calibrate the chassis sensors
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
+
+    leftLift.set_value(true);
+    rightLift.set_value(true);
 
     pros::Task logTaskObj(logTask); // start logging task
 }
