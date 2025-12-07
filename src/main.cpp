@@ -29,8 +29,8 @@ pros::MotorGroup left_mg({-1, -2, 3}, pros::MotorGearset::blue);	// Creates left
 pros::MotorGroup right_mg({4, 7, -8}, pros::MotorGearset::blue);	// Creates right drive motor group with ports 4, 7, and 8
 
 pros::MotorGroup intake_mg({10, -14});	                            // Creates intake motor group with ports 10 and 14
-pros::Motor lower_conveyor(-15);                                    // Creates lower conveyor motor on port 15
-pros::Motor upper_conveyor(-16);                                    // Creates upper conveyor motor on port 16
+pros::Motor lower_conveyor(15);                                    // Creates lower conveyor motor on port 15
+pros::Motor upper_conveyor(16);                                    // Creates upper conveyor motor on port 16
 
 pros::ADIDigitalOut leftLift('A');
 pros::ADIDigitalOut rightLift('B');
