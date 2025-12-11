@@ -11,7 +11,7 @@
 #include "project/ui.hpp"
 
 #define TORQUE_THRESHOLD 0.15
-#define TESTING 000 // Encode UI Values for repeated testing, 0 for disable.
+#define TESTING 121 // Encode UI Values for repeated testing, 0 for disable.
 
 // Device Declarations
 // Ports 5, 6, 9, and 13 are Dead =(
@@ -180,8 +180,8 @@ void autonomous() {
             pros::delay(10);
             chassis.moveToPoint(-50, 48, 2000); // drive to match loader
             chassis.turnToHeading(270, 750);
-            chassis.moveToPoint(-59, 48, 1750, {.maxSpeed = 75});
-            intake_mg.move_velocity(-200); //unload
+            chassis.moveToPoint(-60, 48, 1750, {.maxSpeed = 75});
+            intake_mg.move_velocity(200); //unload
             lower_conveyor.move_velocity(200);
             if (colorIndex == 1 || colorIndex == 2) { // if using color sensing
                 wait_for_intake_color(intake_mg, intake_color, colorIndex);
@@ -204,7 +204,7 @@ void autonomous() {
             pros::delay(1000);
             lower_conveyor.move_velocity(200); // score
             upper_conveyor.move_velocity(200);
-            intake_mg.move_velocity(-200);
+            intake_mg.move_velocity(200);
 /*            pros::delay(2950);
             chassis.setPose(-32, 48, 90); // Reset position to avoid drift (Instead of using Ki)
             lower_conveyor.move_velocity(0);
@@ -227,8 +227,8 @@ void autonomous() {
             pros::delay(10);
             chassis.moveToPoint(-50, -48, 3000);
             chassis.turnToHeading(270, 1000);
-            chassis.moveToPoint(-59, -48, 3000, {.maxSpeed = 75});
-            intake_mg.move_velocity(-200);
+            chassis.moveToPoint(-60, -48, 3000, {.maxSpeed = 75});
+            intake_mg.move_velocity(200);
             lower_conveyor.move_velocity(200);
             if (colorIndex == 1 || colorIndex == 2) { // if using color sensing
                 wait_for_intake_color(intake_mg, intake_color, colorIndex);
@@ -251,7 +251,7 @@ void autonomous() {
             pros::delay(1000);
             lower_conveyor.move_velocity(200);
             upper_conveyor.move_velocity(200);
-            intake_mg.move_velocity(-200);
+            intake_mg.move_velocity(200);
 /*            pros::delay(2950);
             chassis.setPose(-32, -48, 90);
             lower_conveyor.move_velocity(0);
