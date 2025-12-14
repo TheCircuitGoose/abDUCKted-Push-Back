@@ -11,7 +11,7 @@
 #include "project/ui.hpp"
 
 #define TORQUE_THRESHOLD 0.15
-#define TESTING 121 // Encode UI Values for repeated testing, 0 for disable.
+#define TESTING 000 // Encode UI Values for repeated testing, 0 for disable.
 
 // Device Declarations
 // Ports 5, 6, 9, and 13 are Dead =(
@@ -189,7 +189,7 @@ void autonomous() {
             } else if (colorIndex == 3) { // if using torque sensing
                 wait_for_intake_torque(intake_mg, 3, TORQUE_THRESHOLD, 2500); // wait for 3 blocks to be picked up
             } else {
-                pros::delay(2000); // wait 2 second if not using sensing
+                pros::delay(1250); // wait 2 second if not using sensing
                 intake_mg.move_velocity(0);
                 lower_conveyor.move_velocity(0);
             }
@@ -236,7 +236,7 @@ void autonomous() {
             } else if (colorIndex == 3) { // if using torque sensing
                 wait_for_intake_torque(intake_mg, 3, TORQUE_THRESHOLD, 2500); // wait for 3 blocks to be picked up
             } else {
-                pros::delay(2000); // wait 2 second if not using sensing
+                pros::delay(1250); // wait 2 second if not using sensing
                 intake_mg.move_velocity(0);
                 lower_conveyor.move_velocity(0);
             }
@@ -449,7 +449,14 @@ void autonomous() {
             chassis.moveToPoint(-80, 0, 7500, {.forwards = false});
             break;
         }
-        case 7: // Lat PID Tuning
+        case 7: // Just Move
+        {
+            upper_conveyor.move_velocity(600);
+            pros::delay(1000);
+            upper_conveyor.move_velocity(0);
+            break;
+        }
+        case 8: // Lat PID Tuning
         {
             chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
             pros::delay(4750);
@@ -460,7 +467,7 @@ void autonomous() {
             chassis.moveToPose(0, 72, 0, 10000);
             break;
         }
-        case 8: // Ang PID Tuning
+        case 9: // Ang PID Tuning
         {
             chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
             pros::delay(4750);
