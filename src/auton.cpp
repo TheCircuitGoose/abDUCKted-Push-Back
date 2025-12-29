@@ -64,3 +64,10 @@ void wait_for_intake_color(pros::MotorGroup& intake_mg, pros::Optical& intake_co
     intake_mg.move_velocity(0);
     return;
 }
+
+void wait_for_blank(pros::MotorGroup& intake_mg, pros::Optical& loader_color, int timeout) {
+    intake_mg.move_velocity(200);
+    // to be implemnted;
+    intake_mg.move_velocity(0);
+    return;
+}

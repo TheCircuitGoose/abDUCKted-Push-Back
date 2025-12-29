@@ -4,16 +4,15 @@
 
 namespace auton {                                          // Creates "auton" namespace
     const std::string autonNames =                         // List of autons to be selected for display
-        "Disabled\nLeft LG\nRight LG\nSkills CGs\nShort Skills\nLong Skills\nJust Park\nJust Move\nLateral PID Tuning\nAngular PID Tuning";                           
+        "Disabled\nLeft LG\nRight LG\n1 Loader Skills, Parking Skills\nLateral PID Tuning\nAngular PID Tuning";                           
 }
 
 namespace color {
     const std::string colorNames =                         // List of colors to be selected for display
-        "Simple Timer\nColor Sensing (Red)\nColor Sensing (Blue)\nTorque Sensing";
+        "Timer\nColor Sensing (Red)\nColor Sensing (Blue)\nTorque Sensing\nBlanking Sensing";
 }
 
 int get_color(pros::Optical& intake_color);
-
 void wait_for_intake_torque(pros::MotorGroup& intake_mg, int block_quantity, float torque_threshold, int timeout);
-
 void wait_for_intake_color(pros::MotorGroup& intake_mg, pros::Optical& intake_color, int color_index);
+void wait_for_blank(pros::MotorGroup& intake_mg, pros::Optical& loader_color, int timeout);
