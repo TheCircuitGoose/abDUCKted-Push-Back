@@ -29,9 +29,9 @@ pros::MotorGroup left_mg({-1, -2, 3}, pros::MotorGearset::blue);	// Creates left
 pros::MotorGroup right_mg({4, 7, -8}, pros::MotorGearset::blue);	// Creates right drive motor group with ports 4, 7, and 8
 
 pros::MotorGroup intake_mg({10, -14});	                            // Creates intake motor group with ports 10 and 14
-pros::MotorGroup conveyor_mg({15, 16});                            // Creates conveyor motor group with ports 15 and 16
+pros::MotorGroup conveyor_mg({15, -16});                           // Conveyor motors oppose each other physically, reverse 16 to avoid fighting
 pros::Motor lower_conveyor(15);                                    // Creates lower conveyor motor on port 15
-pros::Motor upper_conveyor(16);                                    // Creates upper conveyor motor on port 16
+pros::Motor upper_conveyor(-16);                                    // Creates upper conveyor motor on port 16
 
 pros::ADIDigitalOut leftLift('A');
 pros::ADIDigitalOut rightLift('B');
@@ -339,6 +339,39 @@ void opcontrol() {
             int right = driver.get_analog(ANALOG_RIGHT_Y); // Gets Right Stick Up/Down Value
             chassis.tank(left, right);
 
+            if (driver.get_digital(DIGITAL_L1)) { // intake
+                intake_mg.move_velocity(200);
+            } else if (driver.get_digital(DIGITAL_L2)) {
+                intake_mg.move_velocity(-200);
+            } else {
+                intake_mg.move_velocity(0);
+            }
+
+            if (driver.get_digital(DIGITAL_R1)) { // conveyor
+                conveyor_mg.move_velocity(200);
+            } else if (driver.get_digital(DIGITAL_R2)) {
+                conveyor_mg.move_velocity(-200);
+            } else {
+                conveyor_mg.move_velocity(0);
+            }
+
+//            if (driver.get_digital(DIGITAL_Y)) { // lift
+//                leftLift.set_value(false);
+//                rightLift.set_value(false);
+//            } 
+//            if (driver.get_digital(DIGITAL_B)) {
+//                leftLift.set_value(true);
+//                rightLift.set_value(true);
+//            }
+            
+            pros::delay(10);
+        }
+    } else if (ui.getPartnerIndex() == 1) {
+        while (true) {
+            int left = driver.get_analog(ANALOG_LEFT_Y); // Gets Left Stick Up/Down Value
+            int right = driver.get_analog(ANALOG_RIGHT_Y); // Gets Right Stick Up/Down Value
+            chassis.tank(left, right);
+
             if (driver.get_digital(DIGITAL_L1) || partner.get_digital(DIGITAL_L1)) { // intake
                 intake_mg.move_velocity(200);
             } else if (driver.get_digital(DIGITAL_L2) || partner.get_digital(DIGITAL_L2)) {
@@ -363,79 +396,15 @@ void opcontrol() {
                 upper_conveyor.move_velocity(0);
             }
 
-            if (driver.get_digital(DIGITAL_Y)) { // lift
-                leftLift.set_value(false);
-                rightLift.set_value(false);
-            } 
-            if (driver.get_digital(DIGITAL_B)) {
-                leftLift.set_value(true);
-                rightLift.set_value(true);
-            }
+//            if (driver.get_digital(DIGITAL_Y)) { // lift
+//                leftLift.set_value(false);
+//                rightLift.set_value(false);
+//            } 
+//            if (driver.get_digital(DIGITAL_B)) {
+//                leftLift.set_value(true);
+//                rightLift.set_value(true);
+//            }
             
-            pros::delay(10);
-        }
-    } else if (ui.getPartnerIndex() == 1) {
-        int blockCount = 0; 
-        bool lastBlock = false;
-
-        while (true) {
-            int left = driver.get_analog(ANALOG_LEFT_Y);
-            int right = driver.get_analog(ANALOG_RIGHT_Y);
-            chassis.tank(left, right);
-
-            if (driver.get_digital(DIGITAL_L1) || driver.get_digital(DIGITAL_L2)) {
-                intake_mg.move_velocity(-200); // intake
-
-                double torque = intake_mg.get_torque();
-                if (torque >= TORQUE_THRESHOLD && !lastBlock) { // detect if block was intaken
-                    lastBlock = true;
-                    blockCount++;
-
-                    lower_conveyor.move_relative(720, 200); // move lower conveyor
-
-                    if (blockCount > 4) { // move upper conveyor once bottom is full
-                        upper_conveyor.move_relative(560, 200);
-                    }
-
-                    if (blockCount > 6) { // rumble if full to indicate to driver
-                        driver.rumble("-");
-                    }
-                } 
-                else if (torque < TORQUE_THRESHOLD) {
-                    lastBlock = false; // debounce
-                }
-            } 
-            else {
-                intake_mg.move_velocity(0);
-            }
-
-            if (driver.get_digital(DIGITAL_R1)) { // score
-                lower_conveyor.move_velocity(200);
-                upper_conveyor.move_velocity(200);
-                blockCount = 0; // reset count
-            }
-
-            else if (driver.get_digital(DIGITAL_R2)) { // reverse score
-                lower_conveyor.move_velocity(-200);
-                intake_mg.move_velocity(200);
-                blockCount = 0; // reset count
-            }
-
-            // Stop conveyors if idle
-            else if (!(driver.get_digital(DIGITAL_L1) || driver.get_digital(DIGITAL_L2))) {
-                lower_conveyor.move_velocity(0);
-                upper_conveyor.move_velocity(0);
-            }
-
-            if (driver.get_digital(DIGITAL_A)) { // extend
-                leftLift.set_value(false);
-                rightLift.set_value(false);
-            }
-            if (driver.get_digital(DIGITAL_B)) { // retract
-                leftLift.set_value(true);
-                rightLift.set_value(true);
-            }
-
             pros::delay(10);
         }
     }

@@ -108,7 +108,7 @@ void UI::initUI_NEW(lv_obj_t* parent) {
     // Configure Partner Roller
     lv_roller_set_options(
         partnerRoller,
-        "Dual Controllers\nSmart Partner (BETA)",
+        "Single Controller\nDual Controllers",
         LV_ROLLER_MODE_NORMAL
     );
     lv_roller_set_visible_row_count(partnerRoller, 2);
