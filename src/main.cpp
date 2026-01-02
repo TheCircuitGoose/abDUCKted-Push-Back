@@ -62,8 +62,8 @@ lemlib::TrackingWheel horizontalTrack(&hTrack, // Horizontal Tracking Wheel Rota
 
 // Vertical Tracking Wheel Configuration
 lemlib::TrackingWheel verticalTrack(&vTrack, // Vertical Tracking Wheel Rotation Sensor
-                                      lemlib::Omniwheel::NEW_325, // AS 3.25" Omni Wheel
-                                      -.25 // Distance from robot center in inches (Negative for Left Side)
+                                      lemlib::Omniwheel::NEW_275, // AS 2.75" Omni Wheel
+                                      0 // Distance from robot center in inches (Negative for Left Side)
 );
 
 // Odometry Sensors Configuration
