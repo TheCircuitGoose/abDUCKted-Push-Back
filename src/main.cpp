@@ -88,9 +88,9 @@ lemlib::ControllerSettings lateral_controller(5.8, // proportional gain (kP)
 );
 
 //Angular PID Controller Configuration
-lemlib::ControllerSettings angular_controller(1.5, // proportional gain (kP)
+lemlib::ControllerSettings angular_controller(2, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              7.2, // derivative gain (kD)
+                                              5.5, // derivative gain (kD)
                                               0, // anti windup
                                               0, // small error range, in degrees
                                               0, // small error range timeout, in milliseconds
@@ -152,9 +152,6 @@ void initialize() {
     chassis.calibrate(); // Calibrate the chassis sensors
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
 
-    leftLift.set_value(true);
-    rightLift.set_value(true);
-
     pros::Task logTaskObj(logTask); // start logging task
 }
 
@@ -177,15 +174,13 @@ void autonomous() {
         case 1: // Left
         {
             chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
-            chassis.setPose(-50, 18, 0); // set starting position, touching parking zone
-            leftLift.set_value(true);
-            rightLift.set_value(true);
+            chassis.setPose(-50, 21, 0); // set starting position, touching parking zone
             pros::delay(10);
             chassis.moveToPoint(-50, 48, 1750); // drive to match loader
             chassis.turnToHeading(270, 500);
             chassis.moveToPoint(-60, 48, 1500);
             intake_mg.move_velocity(200); //unload
-            conveyor_mg.move_velocity(200);
+            conveyor_mg.move_velocity(-200);
             if (colorIndex == 1 || colorIndex == 2) { // if using color sensing
                 wait_for_intake_color(intake_mg, intake_color, colorIndex);
                 conveyor_mg.move_velocity(0);
@@ -200,34 +195,24 @@ void autonomous() {
                 conveyor_mg.move_velocity(0);
             }
             chassis.moveToPoint(-25, 48, 2000, {.forwards = false}); // go to long goal
+            pros::delay(200);
+            chassis.moveToPoint(-27, -48, 1000); 
             pros::delay(750);
-            conveyor_mg.move_velocity(200); // score
+            conveyor_mg.move_velocity(-200); // score
             intake_mg.move_velocity(200);
-/*            pros::delay(2950);
-            chassis.setPose(-32, 48, 90); // Reset position to avoid drift (Instead of using Ki)
-            lower_conveyor.move_velocity(0);
-            upper_conveyor.move_velocity(0);
-            intake_mg.move_velocity(0);
-            pros::delay(50);
-            chassis.moveToPoint(-48, 48, 2000, {.forwards = false});
-            chassis.turnToHeading(135, 750);
-            intake_mg.move_velocity(-200);
-            chassis.moveToPoint(-36, 36, 1750);
-            //chassis.moveToPoint(-22, 26, 3000, {.maxSpeed = 75});
-*/          break;
+            chassis.cancelAllMotions();
+          break;
         }
         case 2: // Right, mirrored from Left
         {
             chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
-            chassis.setPose(-50, -18, 0); // mirrored start
-            leftLift.set_value(true);
-            rightLift.set_value(true);
+            chassis.setPose(-50, -21, 0); // mirrored start
             pros::delay(10);
             chassis.moveToPoint(-50, -48, 1750); 
             chassis.turnToHeading(90, 500); 
             chassis.moveToPoint(-60, -48, 1500);
             intake_mg.move_velocity(200); 
-            conveyor_mg.move_velocity(200);
+            conveyor_mg.move_velocity(-200);
             if (colorIndex == 1 || colorIndex == 2) { // if using color sensing
                 wait_for_intake_color(intake_mg, intake_color, colorIndex);
                 conveyor_mg.move_velocity(0);
@@ -241,34 +226,25 @@ void autonomous() {
                 intake_mg.move_velocity(0);
                 conveyor_mg.move_velocity(0);
             }
-            chassis.moveToPoint(-25, -48, 2000, {.forwards = false}); 
+            chassis.moveToPoint(-25, -48, 2000, {.forwards = false});
+            pros::delay(200);
+            chassis.moveToPoint(-27, -48, 1000); 
             pros::delay(750);
-            conveyor_mg.move_velocity(200);
+            conveyor_mg.move_velocity(-200);
             intake_mg.move_velocity(200);
-/*            pros::delay(2950);
-            chassis.setPose(-32, -48, 90);
-            lower_conveyor.move_velocity(0);
-            upper_conveyor.move_velocity(0);
-            intake_mg.move_velocity(0);
-            pros::delay(50);
-            chassis.moveToPoint(-48, -48, 2000, {.forwards = false});
-            chassis.turnToHeading(225, 750);
-            intake_mg.move_velocity(-200);
-            chassis.moveToPoint(-36, -36, 1750);
-*/          break;
+            chassis.cancelAllMotions();
+          break;
         }
         case 3: // Left Only Skills
         {
             chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
-            chassis.setPose(-50, 18, 0); // set starting position, touching parking zone
-            leftLift.set_value(true);
-            rightLift.set_value(true);
+            chassis.setPose(-50, 21, 0); // set starting position, touching parking zone
             pros::delay(10);
             chassis.moveToPoint(-50, 48, 1750); // drive to match loader
             chassis.turnToHeading(270, 500);
             chassis.moveToPoint(-60, 48, 1500);
             intake_mg.move_velocity(200); //unload
-            conveyor_mg.move_velocity(200);
+            conveyor_mg.move_velocity(-200);
             if (colorIndex == 1 || colorIndex == 2) { // if using color sensing
                 wait_for_intake_color(intake_mg, intake_color, colorIndex);
                 conveyor_mg.move_velocity(0);
@@ -278,13 +254,15 @@ void autonomous() {
                 wait_for_blank(intake_mg, bottom_color, 3000); //use bottom color instead of top color for skills
                 conveyor_mg.move_velocity(0);
             } else {
-                pros::delay(1250); // wait 2 second if not using sensing
+                pros::delay(3000); // wait 2 second if not using sensing
                 intake_mg.move_velocity(0);
                 conveyor_mg.move_velocity(0);
             }
             chassis.moveToPoint(-25, 48, 2000, {.forwards = false}); // go to long goal
+            pros::delay(200);
+            chassis.moveToPoint(-27, -48, 1000); 
             pros::delay(750);
-            conveyor_mg.move_velocity(200); // score
+            conveyor_mg.move_velocity(-200); // score
             intake_mg.move_velocity(200);
             pros::delay(3000);
             chassis.moveToPoint(-48, 48, 2000);
@@ -300,7 +278,15 @@ void autonomous() {
             upper_conveyor.move_velocity(0);
             break;
         }
-        case 5: // Lat PID Tuning
+        case 5: // 
+        {
+            chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
+            pros::delay(1000);
+            chassis.setPose(0, 0, 0);
+            chassis.moveToPose(0, 5, 0, 10000);
+            break;
+        }
+        case 6: // Lat PID Tuning
         {
             chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
             pros::delay(4750);
@@ -311,7 +297,7 @@ void autonomous() {
             chassis.moveToPose(0, 72, 0, 10000);
             break;
         }
-        case 6: // Ang PID Tuning
+        case 7: // Ang PID Tuning
         {
             chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
             pros::delay(4750);
