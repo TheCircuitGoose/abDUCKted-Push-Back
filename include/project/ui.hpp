@@ -8,36 +8,34 @@ class UI {
     public:
         UI(); // constructor
 
-        void initUI_NEW(lv_obj_t* parent); // inits
-        void initUI(lv_obj_t* parent);
-
+        void initUI_NEW(lv_obj_t* parent); // init
+        
         int getAutonIndex(); // getters for selected values
         int getColorIndex();
-        int getDriveIndex();
-        int getPartnerIndex();
 
         void goHome();
+        void goAuton();
+        void goField();
     private:
         lv_obj_t* activeScreen;		// Creates activeScreen parent object
 
         lv_obj_t* tabview;          // Tabs
         lv_obj_t* tab_home;
+        lv_obj_t* tab_field;
         lv_obj_t* tab_auton;
-        lv_obj_t* tab_teleop;
 
         lv_obj_t* autonRoller;		// Rollers
         lv_obj_t* colorRoller;
-        lv_obj_t* driveRoller;
-        lv_obj_t* partnerRoller;
 
-        lv_obj_t* battery_label;
+        lv_obj_t* team_label;           // Team number label
+        lv_obj_t* battery_container;    // Container for battery display
+        lv_obj_t* battery_percent_label; // Battery percentage text
+        lv_obj_t* battery_bar;          // Green battery bar
 
         int autonIndex = 0;			// Declares an int for storing the selected.
         int colorIndex = 0;			// Declares an int for storing the selected color.
-        int driveIndex = 0;         // Declares an int for storing the selected drive scheme.
-        int partnerIndex = 0;       // Declares an int for storing the selected partner mode.
 
-        static void battery_task(); // function to update battery percentage on home screen
+        static void battery_task(lv_timer_t* timer); // function to update battery percentage on home screen
 
         static void color_roller_event_handler(lv_event_t* e); // change color of color roller
 };
