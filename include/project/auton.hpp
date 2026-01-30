@@ -1,6 +1,7 @@
 #pragma once                                               // Library is only called once
 
 #include <string>                                          // Include string library
+#include <array>
 
 typedef struct {
     float x;
@@ -43,6 +44,7 @@ class trigonometricPositioningSystem {
                                        float bOffsetX, float bOffsetY);
 
         Pose2D getLivePosition();
+        std::array<float, 3> getPositionArray();
     private:
         pros::Distance& frontSensor;
         pros::Distance& leftSensor;

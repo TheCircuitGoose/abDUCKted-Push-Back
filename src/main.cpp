@@ -10,7 +10,7 @@
 #include "project/auton.hpp"
 #include "project/ui.hpp"
 
-#define TESTING 121 // Encode UI Values for repeated testing, 0 for disable.
+#define TESTING 000 // Encode UI Values for repeated testing, 0 for disable.
 
 // Device Declarations
 // Ports 5, 6, 9, and 13 are Dead =(
@@ -21,25 +21,24 @@ pros::Motor left1(-1, pros::MotorGearset::blue);                // individual mo
 pros::Motor left2(-2, pros::MotorGearset::blue);
 pros::Motor left3(3, pros::MotorGearset::blue);
 pros::Motor right1(4, pros::MotorGearset::blue);
-pros::Motor right2(7, pros::MotorGearset::blue);
-pros::Motor right3(-8, pros::MotorGearset::blue);
+pros::Motor right2(5, pros::MotorGearset::blue);
+pros::Motor right3(-6, pros::MotorGearset::blue);
 
 pros::MotorGroup left_mg({-1, -2, 3}, pros::MotorGearset::blue);	// Creates left drive motor group with ports 1, 2, and 3
-pros::MotorGroup right_mg({4, 7, -8}, pros::MotorGearset::blue);	// Creates right drive motor group with ports 4, 7, and 8
+pros::MotorGroup right_mg({4, 5, -6}, pros::MotorGearset::blue);	// Creates right drive motor group with ports 4, 7, and 8
 
-pros::MotorGroup intake_mg({-10, 14});	                            // Creates intake motor group with ports 10 and 14
-pros::MotorGroup conveyor_mg({15, 16});                           // Conveyor motors oppose each other physically, reverse 16 to avoid fighting
-pros::Motor lower_conveyor(15);                                    // Creates lower conveyor motor on port 15
-pros::Motor upper_conveyor(16);                                    // Creates upper conveyor motor on port 16
+pros::MotorGroup intake_mg({-7, 8});	                            // Creates intake motor group with ports 10 and 14
+pros::MotorGroup conveyor_mg({9, 10});                           // Conveyor motors oppose each other physically, reverse 16 to avoid fighting
+pros::Motor lower_conveyor(9);                                    // Creates lower conveyor motor on port 15
+pros::Motor upper_conveyor(10);                                    // Creates upper conveyor motor on port 16
 
 pros::ADIDigitalOut descore('H');
 
 pros::Imu inertial(11);												// Creates inertial sensor on port 11
 pros::Rotation hTrack(12);											// Creates horizontal tracking wheel on port 11
-pros::Rotation vTrack(-17);                                         // Creates vertical tracking wheel on port 17
+pros::Rotation vTrack(-13);                                         // Creates vertical tracking wheel on port 17
 
-pros::Optical intake_color(18);                                     // Creates optical sensor on port 18
-pros::Optical top_color(19);                                        // Creates optical sensor on port 19
+pros::Optical top_color(14);                                        // Creates optical sensor on port 19
 pros::Optical bottom_color(20);                                     // Creates optical sensor on port 20
 
 // LemLib Declarations
@@ -313,6 +312,7 @@ void opcontrol() {
     }
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST); // Set the brake mode to brake
     ui.goHome();
+    descore.set_value(false);
     while (true) {
             int left = driver.get_analog(ANALOG_LEFT_Y); // Gets Left Stick Up/Down Value
             int right = driver.get_analog(ANALOG_RIGHT_Y); // Gets Right Stick Up/Down Value
@@ -334,11 +334,10 @@ void opcontrol() {
                 conveyor_mg.move_velocity(0);
             }
 
-            if (driver.get_digital(DIGITAL_Y)) { // descore
-                descore.set_value(true);
-            } 
-            if (driver.get_digital(DIGITAL_B)) {
+            if(driver.get_digital(DIGITAL_Y)) {
                 descore.set_value(false);
+            } else {
+                descore.set_value(true);
             }
             
             pros::delay(10);
