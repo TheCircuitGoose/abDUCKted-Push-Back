@@ -3,6 +3,8 @@
 #include <chrono>
 #include <cmath>
 
+static constexpr double MM_TO_IN = 1.0 / 25.4;
+
 using namespace std;
 
 void Timer::start() {
@@ -25,154 +27,70 @@ void wait_for_blank(pros::MotorGroup& intake_mg, pros::Optical& loader_color, in
     return;
 }
 
-trigonometricPositioningSystem::trigonometricPositioningSystem(
-    pros::Distance& front, 
-    pros::Distance& left, 
-    pros::Distance& right, 
-    pros::Distance& back, 
-    pros::IMU& inertial, 
-    float fOffsetX, float fOffsetY, 
-    float lOffsetX, float lOffsetY, 
-    float rOffsetX, float rOffsetY, 
-    float bOffsetX, float bOffsetY
-) :
-    frontSensor(front),
-    leftSensor(left),
-    rightSensor(right),
-    backSensor(back),
-    imuSensor(inertial),
-    fOffsetX(fOffsetX), fOffsetY(fOffsetY),
-    lOffsetX(lOffsetX), lOffsetY(lOffsetY),
-    rOffsetX(rOffsetX), rOffsetY(rOffsetY),
-    bOffsetX(bOffsetX), bOffsetY(bOffsetY) {
-        rawFrontDistance = 0;
-        rawLeftDistance = 0;
-        rawRightDistance = 0;
-        rawBackDistance = 0;
-        imuHeading = 0;
-        actualFrontDistance = 0;
-        actualLeftDistance = 0;
-        actualRightDistance = 0;
-        actualBackDistance = 0;
-        frontIsValid = false;
-        leftIsValid = false;
-        rightIsValid = false;
-        backIsValid = false;
-        position = {0, 0, 0};
-}
+OdomCorrector::OdomCorrector(
+    pros::Distance& FL, double fl_x, double fl_y,
+    pros::Distance& FR, double fr_x, double fr_y,
+    pros::Distance& L,  double l_x,  double l_y,
+    pros::Distance& R,  double r_x,  double r_y,
+    double field_width, double field_height
+)
+: FL(FL), FR(FR), L(L), R(R),
+  fl_x(fl_x), fl_y(fl_y),
+  fr_x(fr_x), fr_y(fr_y),
+  l_x(l_x),   l_y(l_y),
+  r_x(r_x),   r_y(r_y),
+  field_width(field_width),
+  field_height(field_height)
+{}
 
-Pose2D trigonometricPositioningSystem::getLivePosition() {
-    return position;
-}
+Pose OdomCorrector::correct(Pose current_pose) {
+    double new_x = current_pose.x;
+    double new_y = current_pose.y;
+    double new_theta = current_pose.theta;
 
-std::array<float, 3> trigonometricPositioningSystem::getPositionArray() {
-    getPosition();
-    return {position.x, position.y, position.heading};
-}
+    double fl_read = FL.get() * MM_TO_IN;
+    double fr_read = FR.get() * MM_TO_IN;
+    double l_read  = L.get()  * MM_TO_IN;
+    double r_read  = R.get()  * MM_TO_IN;
 
-void trigonometricPositioningSystem::verifyDistances() {
-    const float fieldSize = 144.0f; // 12 ft field in inches
-    const float diagSize = fieldSize * 1.41421356237f; // diagonal across the field
-    const float pairTolerance = 3.0f; // allowable error for opposite wall sums
-    const float diagTolerance = 4.0f; // allowable error for diagonal checks
-
-    auto inRange = [fieldSize](float distance) {
-        return distance > 0.5f && distance < fieldSize;
-    };
-
-    frontIsValid = inRange(actualFrontDistance);
-    backIsValid = inRange(actualBackDistance);
-    leftIsValid = inRange(actualLeftDistance);
-    rightIsValid = inRange(actualRightDistance);
-
-    if (frontIsValid && backIsValid) {
-        float sumFB = actualFrontDistance + actualBackDistance;
-        if (std::fabs(sumFB - fieldSize) > pairTolerance) {
-            frontIsValid = false;
-            backIsValid = false;
+    if (fl_read < MAX_DISTANCE) {
+        if (fr_read < MAX_DISTANCE) {
+            double sensor_spacing = fl_x - fr_x;
+            if (std::fabs(sensor_spacing) > 1e-6) {
+                double theta_front = std::atan((fl_read - fr_read) / sensor_spacing);
+                double avg_front = (fl_read + fr_read) / 2.0;
+                double predicted_y = (field_height / 2.0) - avg_front - fl_y;
+                if (std::fabs(predicted_y - current_pose.y) < MAX_CORRECTION) {
+                    new_y = current_pose.y * (1.0 - BLEND) + predicted_y * BLEND;
+                    new_theta = current_pose.theta * (1.0 - BLEND) + theta_front * BLEND;
+                }
+            }
         }
     }
 
-    if (leftIsValid && rightIsValid) {
-        float sumLR = actualLeftDistance + actualRightDistance;
-        if (std::fabs(sumLR - fieldSize) > pairTolerance) {
-            leftIsValid = false;
-            rightIsValid = false;
+    if (l_read < MAX_DISTANCE) {
+        double predicted_x = (-field_width / 2.0) + l_read + l_x;
+        if (std::fabs(predicted_x - current_pose.x) < MAX_CORRECTION) {
+            new_x = current_pose.x * (1.0 - BLEND) + predicted_x * BLEND;
         }
     }
 
-    if (frontIsValid && backIsValid && leftIsValid && rightIsValid) {
-        float diagA = std::hypot(actualFrontDistance, actualRightDistance) + std::hypot(actualBackDistance, actualLeftDistance);
-        float diagB = std::hypot(actualFrontDistance, actualLeftDistance) + std::hypot(actualBackDistance, actualRightDistance);
-        bool diagOk = (std::fabs(diagA - diagSize) <= diagTolerance) || (std::fabs(diagB - diagSize) <= diagTolerance);
-        if (!diagOk) {
-            frontIsValid = false;
-            backIsValid = false;
-            leftIsValid = false;
-            rightIsValid = false;
+    if (r_read < MAX_DISTANCE) {
+        double predicted_x = (field_width / 2.0) - r_read - r_x;
+        if (std::fabs(predicted_x - current_pose.x) < MAX_CORRECTION) {
+            new_x = current_pose.x * (1.0 - BLEND) + predicted_x * BLEND;
         }
     }
+
+    if (new_x < -field_width / 2.0) { return current_pose; }
+    if (new_x >  field_width / 2.0) { return current_pose; }
+    if (new_y < -field_height / 2.0) { return current_pose; }
+    if (new_y >  field_height / 2.0) { return current_pose; }
+
+    Pose corrected_pose;
+    corrected_pose.x = new_x;
+    corrected_pose.y = new_y;
+    corrected_pose.theta = new_theta;
+
+    return corrected_pose;
 }
-
-void trigonometricPositioningSystem::rotateDistances() {
-    constexpr float degToRad = 3.14159265358979323846f / 180.0f;
-    float headingRad = imuHeading * degToRad;
-    float sinH = std::sin(headingRad);
-    float cosH = std::cos(headingRad);
-
-    // Robot forward/right vectors expressed in field frame (0 deg faces +Y/north)
-    float forwardX = sinH;
-    float forwardY = cosH;
-    float rightX = cosH;
-    float rightY = -sinH;
-
-    auto project = [](float vx, float vy, float dirX, float dirY) {
-        return vx * dirX + vy * dirY;
-    };
-
-    actualFrontDistance = rawFrontDistance + project(fOffsetX, fOffsetY, forwardX, forwardY);
-    actualBackDistance  = rawBackDistance  + project(bOffsetX, bOffsetY, -forwardX, -forwardY);
-    actualLeftDistance  = rawLeftDistance  + project(lOffsetX, lOffsetY, -rightX, -rightY);
-    actualRightDistance = rawRightDistance + project(rOffsetX, rOffsetY, rightX, rightY);
-}
-
-void trigonometricPositioningSystem::getPosition() {
-    // Read raw sensor values (Distance sensor returns millimeters)
-    rawFrontDistance = frontSensor.get() / 25.4f;
-    rawLeftDistance = leftSensor.get() / 25.4f;
-    rawRightDistance = rightSensor.get() / 25.4f;
-    rawBackDistance = backSensor.get() / 25.4f;
-    imuHeading = imuSensor.get_heading();
-
-    rotateDistances();
-    verifyDistances();
-
-    const float halfField = 72.0f; // half of 12 ft field in inches
-
-    float x;
-    float y;
-
-    if (leftIsValid && rightIsValid) {
-        x = (actualLeftDistance - actualRightDistance) / 2.0f;
-    } else if (rightIsValid) {
-        x = halfField - actualRightDistance;
-    } else if (leftIsValid) {
-        x = actualLeftDistance - halfField;
-    } else {
-        x = 999999.0f; // both invalid → failure marker
-    }
-
-    if (frontIsValid && backIsValid) {
-        y = (actualBackDistance - actualFrontDistance) / 2.0f;
-    } else if (frontIsValid) {
-        y = halfField - actualFrontDistance;
-    } else if (backIsValid) {
-        y = actualBackDistance - halfField;
-    } else {
-        y = 999999.0f; // both invalid → failure marker
-    }
-
-    // Heading is maintained in degrees from the IMU, where 0 deg faces north.
-    position = {x, y, imuHeading};
-}
-

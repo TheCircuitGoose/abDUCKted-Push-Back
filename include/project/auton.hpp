@@ -2,6 +2,7 @@
 
 #include <string>                                          // Include string library
 #include <array>
+#include "main.h"
 
 typedef struct {
     float x;
@@ -31,54 +32,40 @@ class Timer {
 
 void wait_for_blank(pros::MotorGroup& intake_mg, pros::Optical& loader_color, int timeout);
 
-class trigonometricPositioningSystem {
-    public:
-        trigonometricPositioningSystem(pros::Distance& front, 
-                                       pros::Distance& left, 
-                                       pros::Distance& right, 
-                                       pros::Distance& back, 
-                                       pros::IMU& inertial, 
-                                       float fOffsetX, float fOffsetY, 
-                                       float lOffsetX, float lOffsetY, 
-                                       float rOffsetX, float rOffsetY, 
-                                       float bOffsetX, float bOffsetY);
-
-        Pose2D getLivePosition();
-        std::array<float, 3> getPositionArray();
-    private:
-        pros::Distance& frontSensor;
-        pros::Distance& leftSensor;
-        pros::Distance& rightSensor;
-        pros::Distance& backSensor;
-        pros::IMU& imuSensor;
-        float fOffsetX;
-        float fOffsetY;
-        float lOffsetX;
-        float lOffsetY;
-        float rOffsetX;
-        float rOffsetY;
-        float bOffsetX;
-        float bOffsetY;
-
-        float rawFrontDistance;
-        float rawLeftDistance;
-        float rawRightDistance;
-        float rawBackDistance;
-        float imuHeading;
-
-        float actualFrontDistance;
-        float actualLeftDistance;
-        float actualRightDistance;
-        float actualBackDistance;
-
-        bool frontIsValid;
-        bool leftIsValid;
-        bool rightIsValid;
-        bool backIsValid;
-
-        Pose2D position;
-
-        void verifyDistances();
-        void rotateDistances();
-        void getPosition();
+struct Pose {
+    double x;
+    double y;
+    double theta;
 };
+
+class OdomCorrector {
+    private:
+        pros::Distance& FL;
+        pros::Distance& FR;
+        pros::Distance& L;
+        pros::Distance& R;
+
+        double fl_x, fl_y;
+        double fr_x, fr_y;
+        double l_x, l_y;
+        double r_x, r_y;
+
+        double field_width;
+        double field_height;
+
+        const double MAX_DISTANCE = 48.0;
+        const double MAX_CORRECTION = 6.0;
+        const double BLEND = 0.25;
+
+    public:
+        OdomCorrector(
+            pros::Distance& FL, double fl_x, double fl_y,
+            pros::Distance& FR, double fr_x, double fr_y,
+            pros::Distance& L, double l_x, double l_y,
+            pros::Distance& R, double r_x, double r_y,
+            double field_width, double field_height
+        );
+
+        Pose correct(Pose current_pose);
+};
+

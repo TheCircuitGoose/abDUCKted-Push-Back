@@ -38,7 +38,12 @@ pros::Imu inertial(11);												// Creates inertial sensor on port 11
 pros::Rotation hTrack(12);											// Creates horizontal tracking wheel on port 11
 pros::Rotation vTrack(-13);                                         // Creates vertical tracking wheel on port 17
 
-pros::Optical top_color(14);                                        // Creates optical sensor on port 19
+pros::Distance FL(14);
+pros::Distance FR(15);
+pros::Distance L(16);
+pros::Distance R(17);
+
+pros::Optical top_color(19);                                        // Creates optical sensor on port 19
 pros::Optical bottom_color(20);                                     // Creates optical sensor on port 20
 
 // LemLib Declarations
@@ -64,9 +69,9 @@ lemlib::TrackingWheel verticalTrack(&vTrack, // Vertical Tracking Wheel Rotation
 );
 
 // Odometry Sensors Configuration
-lemlib::OdomSensors sensors(&verticalTrack, // vertical tracking wheel 1, set to vertical rotation sensor.
+lemlib::OdomSensors sensors(nullptr, // vertical tracking wheel 1, set to vertical rotation sensor.
                             nullptr, // vertical tracking wheel 2, set to null
-                            &horizontalTrack, // horizontal tracking wheel 1, set to horizontal rotation sensor. 
+                            nullptr, // horizontal tracking wheel 1, set to horizontal rotation sensor. 
                             nullptr, // horizontal tracking wheel 2, set to null
                             &inertial // inertial sensor, set to inertial sensor device
 );
@@ -133,6 +138,9 @@ void logTask() {
     }
 }
 
+bool disabledThing = 0;
+bool inMatch = 0;
+
 // UI Declarations
 int autonIndex = 0;	// Declares an int for storing the selected auton routine.
 int colorIndex = 0; // Declares an int for storing the selected color.
@@ -148,6 +156,7 @@ void initialize() {
     vTrack.reset(); // Reset the vertical tracking wheel
     chassis.calibrate(); // Calibrate the chassis sensors
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
+    descore.set_value(false);
 
     pros::Task logTaskObj(logTask); // start logging task
 }
@@ -158,12 +167,15 @@ void disabled() {}
 // When Connected to Field Control
 void competition_initialize() {
     ui.goAuton();
+    descore.set_value(false);
+    inMatch = 1;
 }
 
 // When Autonomous
 void autonomous() {
     autonIndex = ui.getAutonIndex(); // get selected ui values
     colorIndex = ui.getColorIndex();
+    inMatch = 1;
     if ((TESTING / 100) == 1) { // if testing auton
         autonIndex = (TESTING / 10) % 10;
         colorIndex = TESTING % 10;
@@ -179,7 +191,7 @@ void autonomous() {
             chassis.turnToHeading(270, 500, {.maxSpeed = 64});
             pros::delay(750);
             chassis.moveToPoint(-64, 48, 1500, {.maxSpeed = 64});
-            intake_mg.move_velocity(200); //unload
+            intake_mg.move_velocity(-200); //unload
             conveyor_mg.move_velocity(-200);
             if (colorIndex == 1) { // if using blanking sensing
                 chassis.waitUntilDone();
@@ -194,7 +206,7 @@ void autonomous() {
             chassis.moveToPoint(-25, 48, 2000, {.forwards = false, .maxSpeed = 64}); // go to long goal
             pros::delay(650);
             conveyor_mg.move_velocity(-200); // score
-            intake_mg.move_velocity(200);
+            intake_mg.move_velocity(-200);
             pros::delay(3000);
             chassis.cancelAllMotions();
           break;
@@ -208,7 +220,7 @@ void autonomous() {
             chassis.turnToHeading(270, 500, {.maxSpeed = 64});
             pros::delay(750);
             chassis.moveToPoint(-64, -48, 1500, {.maxSpeed = 112});
-            intake_mg.move_velocity(200); 
+            intake_mg.move_velocity(-200); 
             conveyor_mg.move_velocity(-200);
             if (colorIndex == 1) { // if using blanking sensing
                 chassis.waitUntilDone();
@@ -223,7 +235,7 @@ void autonomous() {
             chassis.moveToPoint(-25, -48, 2000, {.forwards = false, .maxSpeed = 64}); 
             pros::delay(650);
             conveyor_mg.move_velocity(-200);
-            intake_mg.move_velocity(200);
+            intake_mg.move_velocity(-200);
             pros::delay(3000);
             chassis.cancelAllMotions();
             break;
@@ -237,7 +249,7 @@ void autonomous() {
             chassis.turnToHeading(270, 500, {.maxSpeed = 64});
             pros::delay(750);
             chassis.moveToPoint(-64, 48, 1500, {.maxSpeed = 64});
-            intake_mg.move_velocity(200); //unload
+            intake_mg.move_velocity(-200); //unload
             conveyor_mg.move_velocity(-200);
             if (colorIndex == 1) { // if using blanking sensing (DONT USE FOR SKILLS)
                 chassis.waitUntilDone();
@@ -252,7 +264,7 @@ void autonomous() {
             chassis.moveToPoint(-25, 48, 2000, {.forwards = false, .maxSpeed = 64}); // go to long goal
             pros::delay(650);
             conveyor_mg.move_velocity(-200); // score
-            intake_mg.move_velocity(200);
+            intake_mg.move_velocity(-200);
             pros::delay(3000);
             chassis.moveToPoint(-48, 48, 2000, {.maxSpeed = 64});
             chassis.moveToPoint(-24, 16, 3000, {.maxSpeed = 64});
@@ -307,6 +319,7 @@ void autonomous() {
 
 // When Driver Control
 void opcontrol() {
+    disabledThing = 0;
     if ((TESTING / 100) == 1) { // if testing auton
         autonomous();
     }
@@ -334,12 +347,21 @@ void opcontrol() {
                 conveyor_mg.move_velocity(0);
             }
 
-            if(driver.get_digital(DIGITAL_Y)) {
+            if (driver.get_digital(DIGITAL_Y) || disabledThing) {
                 descore.set_value(false);
             } else {
                 descore.set_value(true);
             }
-            
+
+            if (driver.get_digital(DIGITAL_DOWN) && !inMatch) {
+                if (disabledThing == 0) {
+                    disabledThing = 1;
+                    pros::delay(1000);
+                } else {
+                    pros::delay(1000);
+                    disabledThing = 0;
+                }
+            }
             pros::delay(10);
     }
 }
