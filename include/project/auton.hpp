@@ -31,6 +31,7 @@ class Timer {
 };
 
 void wait_for_blank(pros::MotorGroup& intake_mg, pros::Optical& loader_color, int timeout);
+void conveyor_anti_jam(pros::Motor& motor1, pros::Motor& motor2, double torque_threshold, int timeout);
 
 struct Pose {
     double x;
@@ -53,8 +54,8 @@ class OdomCorrector {
         double field_width;
         double field_height;
 
-        const double MAX_DISTANCE = 48.0;
-        const double MAX_CORRECTION = 6.0;
+        const double MAX_DISTANCE = 96.0;
+        const double MAX_CORRECTION = 12.0;
         const double BLEND = 0.25;
 
     public:

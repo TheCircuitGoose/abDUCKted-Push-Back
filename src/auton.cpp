@@ -27,6 +27,33 @@ void wait_for_blank(pros::MotorGroup& intake_mg, pros::Optical& loader_color, in
     return;
 }
 
+void conveyor_anti_jam(pros::Motor& motor1, pros::Motor& motor2, double torque_threshold, int timeout) {
+    Timer timer;
+    timer.start();
+    motor1.move_velocity(-200);
+    motor2.move_velocity(-200);
+    
+    while (true) {
+        timer.stop();
+        if (timer.getTime() >= timeout) {
+            break;
+        }
+        
+        if (motor1.get_torque() > torque_threshold || motor2.get_torque() > torque_threshold) {
+            // Jam detected, reverse
+            motor1.move_velocity(200);
+            motor2.move_velocity(200);
+            pros::delay(500);  // Reverse for 0.5 seconds
+            
+            // Resume forward motion
+            motor1.move_velocity(-200);
+            motor2.move_velocity(-200);
+        }
+        
+        pros::delay(10);  // Small delay to prevent busy-waiting
+    }
+}
+
 OdomCorrector::OdomCorrector(
     pros::Distance& FL, double fl_x, double fl_y,
     pros::Distance& FR, double fr_x, double fr_y,

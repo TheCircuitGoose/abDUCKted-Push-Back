@@ -4,6 +4,10 @@
 
 #include "project/ui.hpp"
 
+#include <algorithm>
+#include <cmath>
+#include <string>
+
 UI::UI() {};
 
 int UI::getAutonIndex() { // getters for selected values
@@ -112,8 +116,81 @@ void UI::initUI_NEW(lv_obj_t* parent) {
     lv_obj_align(colorRoller, LV_ALIGN_RIGHT_MID, 0, 0);
     lv_obj_add_event_cb(colorRoller, color_roller_event_handler, LV_EVENT_ALL, NULL);
 
+    // FIELD TAB
+    lv_obj_set_size(tab_field, 480, 200);
+    lv_obj_center(tab_field);
+    lv_obj_set_style_pad_all(tab_field, 0, LV_PART_MAIN);
+
+    field_container = lv_obj_create(tab_field);
+    lv_obj_set_size(field_container, 200, 200);
+    lv_obj_align(field_container, LV_ALIGN_TOP_LEFT, 0, 0);
+    lv_obj_set_style_bg_color(field_container, lv_color_hex(0x0d0d0d), LV_PART_MAIN);
+    lv_obj_set_style_border_color(field_container, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+    lv_obj_set_style_border_width(field_container, 2, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(field_container, 0, LV_PART_MAIN);
+
+    field_dot = nullptr;
+
+    field_log_label = lv_label_create(tab_field);
+    lv_obj_set_width(field_log_label, 260);
+    lv_obj_set_height(field_log_label, 200);
+    lv_obj_align(field_log_label, LV_ALIGN_TOP_RIGHT, -5, 0);
+    lv_label_set_text(field_log_label, "");
+
     // Create timer to update battery display every 10 seconds
     lv_timer_create(UI::battery_task, 10000, (void*)this);
+}
+
+void UI::updateFieldPose(const Pose& pose) {
+    constexpr int field_size_px = 200;
+    constexpr double field_half_in = 72.0;
+    constexpr double field_span_in = 144.0;
+
+    double x_norm = (pose.x + field_half_in) / field_span_in;
+    double y_norm = (field_half_in - pose.y) / field_span_in;
+
+    x_norm = std::clamp(x_norm, 0.0, 1.0);
+    y_norm = std::clamp(y_norm, 0.0, 1.0);
+
+    int x_px = static_cast<int>(std::lround(x_norm * field_size_px));
+    int y_px = static_cast<int>(std::lround(y_norm * field_size_px));
+
+    const int dot_size = 6;
+    x_px = std::clamp(x_px - dot_size / 2, 0, field_size_px - dot_size);
+    y_px = std::clamp(y_px - dot_size / 2, 0, field_size_px - dot_size);
+
+    if (field_dot != nullptr) {
+        lv_obj_del(field_dot);
+        field_dot = nullptr;
+    }
+
+    field_dot = lv_obj_create(field_container);
+    lv_obj_set_size(field_dot, dot_size, dot_size);
+    lv_obj_set_style_radius(field_dot, dot_size / 2, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(field_dot, lv_color_hex(0x00FF00), LV_PART_MAIN);
+    lv_obj_set_style_border_width(field_dot, 0, LV_PART_MAIN);
+    lv_obj_set_pos(field_dot, x_px, y_px);
+
+    pose_log[pose_log_head] = pose;
+    if (pose_log_count < static_cast<int>(pose_log.size())) {
+        pose_log_count++;
+    }
+    pose_log_head = (pose_log_head + 1) % static_cast<int>(pose_log.size());
+
+    std::string log_text;
+    log_text.reserve(256);
+    for (int i = 0; i < pose_log_count; ++i) {
+        int index = pose_log_head - 1 - i;
+        if (index < 0) {
+            index += static_cast<int>(pose_log.size());
+        }
+        const Pose& entry = pose_log[index];
+        char line[64];
+        snprintf(line, sizeof(line), "x:%6.1f y:%6.1f t:%6.1f\n", i + 1, entry.x, entry.y, entry.theta);
+        log_text += line;
+    }
+
+    lv_label_set_text(field_log_label, log_text.c_str());
 }
 
 void UI::color_roller_event_handler(lv_event_t* e) { // change color of color selector
