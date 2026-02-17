@@ -10,7 +10,7 @@
 #include "project/auton.hpp"
 #include "project/ui.hpp"
 
-#define TESTING 130 // Encode UI Values for repeated testing, 0 for disable.
+#define TESTING 000 // Encode UI Values for repeated testing, 0 for disable.
 
 #define CONVEYOR_TORQUE_THRESHOLD 3.0
 
