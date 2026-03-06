@@ -106,14 +106,6 @@ lemlib::Chassis chassis(drivetrain, // drivetrain settings
                         sensors // odometry sensors
 );
 
-OdomCorrector odom_corrector(
-    FL, 0, 0,
-    FR, 0, 0,
-    L, 0, 0,
-    R, 0, 0,
-    144, 144
-);
-
 bool isLogging = false;
 int targetDistance = 0;
 
@@ -125,7 +117,6 @@ void fieldTask() {
     while (true) {
         auto pose = chassis.getPose();
         Pose current_pose{pose.x, pose.y, pose.theta};
-        //Pose corrected_pose = odom_corrector.correct(current_pose);
         ui.updateFieldPose(current_pose);
         pros::delay(50);
     }
@@ -249,7 +240,7 @@ void autonomous() {
             chassis.cancelAllMotions();
             break;
         }
-        case 3: // Right Only Skills
+        case 3: // Short Skills
         {
             chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
             chassis.setPose(-50, -17.25, 180); // mirrored start
@@ -268,38 +259,43 @@ void autonomous() {
             pros::delay(650);
             intake_mg.move_velocity(-200);
             conveyor_anti_jam(lower_conveyor, upper_conveyor, CONVEYOR_TORQUE_THRESHOLD, 3000); // score
-            pros::delay(3000);
-            chassis.moveToPoint(-50, -48, 1750, {.maxSpeed = 64}); 
-            pros::delay(250);
-            chassis.moveToPoint(-64, -48, 1500, {.maxSpeed = 112});
-            intake_mg.move_velocity(-200); 
-            conveyor_mg.move_velocity(-200);
-            pros::delay(1250);
-            intake_mg.move_velocity(0);
-            conveyor_mg.move_velocity(0);
-            pros::delay(100);
-            chassis.moveToPoint(-25, -48, 2000, {.forwards = false, .maxSpeed = 64}); 
-            pros::delay(650);
-            intake_mg.move_velocity(-200);
-            conveyor_anti_jam(lower_conveyor, upper_conveyor, CONVEYOR_TORQUE_THRESHOLD, 3000);
+            for (int i = 0; i < 3; i++) {
+                pros::delay(3000);
+                chassis.moveToPoint(-50, -48, 1750, {.maxSpeed = 64}); 
+                pros::delay(250);
+                chassis.moveToPoint(-64, -48, 1500, {.maxSpeed = 112});
+                intake_mg.move_velocity(-200); 
+                conveyor_mg.move_velocity(-200);
+                pros::delay(1250);
+                intake_mg.move_velocity(0);
+                conveyor_mg.move_velocity(0);
+                pros::delay(100);
+                chassis.moveToPoint(-25, -48, 2000, {.forwards = false, .maxSpeed = 64}); 
+                pros::delay(650);
+                intake_mg.move_velocity(-200);
+                conveyor_anti_jam(lower_conveyor, upper_conveyor, CONVEYOR_TORQUE_THRESHOLD, 3000);
+            }
             pros::delay(1000);
 
-            chassis.moveToPoint(-36, -48, 1750, {.maxSpeed = 64}); 
-            chassis.moveToPoint(-48, 48, 2000, {.maxSpeed = 64});
-            chassis.moveToPoint(-24, 16, 3000, {.maxSpeed = 64});
-            chassis.turnToHeading(75, 1500, {.maxSpeed = 64});
+            chassis.moveToPoint(-48, -48, 2000, {.maxSpeed = 74});
+            chassis.turnToHeading(165.5, 1500, {.maxSpeed = 74});
+
             chassis.moveToPoint(-64, 0, 20000, {.forwards = false});
             pros::delay(5000);
             break;
         }
-        case 4: // Just Move
+        case 4: // Long Skills
+        {
+            break;
+        }
+        case 5: // Just Move
         {
             upper_conveyor.move_velocity(600);
             pros::delay(1000);
             upper_conveyor.move_velocity(0);
             break;
         }
-        case 5: // Simple Forward
+        case 6: // Simple Forward
         {
             chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
             pros::delay(1000);
@@ -307,7 +303,7 @@ void autonomous() {
             chassis.moveToPose(0, 5, 0, 10000);
             break;
         }
-        case 6: // Lat PID Tuning
+        case 7: // Lat PID Tuning
         {
             chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
             pros::delay(4750);
@@ -318,7 +314,7 @@ void autonomous() {
             chassis.moveToPose(0, 24, 0, 10000);
             break;
         }
-        case 7: // Ang PID Tuning
+        case 8: // Ang PID Tuning
         {
             chassis.setBrakeMode(pros::E_MOTOR_BRAKE_BRAKE);
             pros::delay(4750);
